@@ -1,0 +1,4 @@
+src/th-cmd/th-init
+src/th-cmd/th-commit
+src/th-cmd/th-checkout
+src/th-cmd/th-log

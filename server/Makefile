@@ -8,4 +8,6 @@ all:
 	make server
 
 server:
-	gcc -o th-server th-server.c $(HELPER)/$(SERVER_RQ_HANDLER) $(HELPER)/$(SOCKET_VALIDATE) $(HELPER)/$(MESSAGE_HANDLER)
+	gcc -o th-server th-server.c $(HELPER)/$(SERVER_RQ_HANDLER) $(HELPER)/$(SOCKET_VALIDATE) $(HELPER)/$(MESSAGE_HANDLER) $(HELPER)/$(FILE_HANDLER)
+	gcc -o th-test th-test.c $(HELPER)/$(FILE_HANDLER)
+	

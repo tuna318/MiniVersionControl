@@ -8,7 +8,20 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define th_folder ".th"
+typedef struct PathInfo {
+    char absolute_path[512];
+    char relative_folder[256];
+    char file_name[32];
+    struct PathInfo *next;
+} FilePathInfo;
+
+#define TH_FOLDER ".th"
+#define COMMIT_FOLDER "commits"
+
+#define LOG_FILE "structure_log"
+#define COMMIT_FILE "commit_log"
+#define USER_FILE "user_info"
+
 #define MAXLEN 1024
 #define DELIM " "
 
@@ -22,9 +35,13 @@ int isValidDirectory(const char *path);
 void strTokenize(char *string, char strArr[10][MAXLEN], char *delim);
 // Get user info
 void getUserInfo(char *filename, char *username, char *email);
-// Send file content message Encoding
-void encode_msg(char FLAG, char *username, char *repo, char *commit, char *file_locate, char* data, char encode_msg[]);
-// Send file content message Decoding
-void decode_msg(char *FLAG, char username[], char repo[], char commit[], char file_locate[], char data[], char encoded_msg[]);
+// Create a folder with absolute path
+void create_path(char* absolute_path);
+// Get folder structure
+void get_folder_structure(char *root_path, char *temp_path, FilePathInfo **path_info);
 
 
+// Node structure
+void free_path_info_nodes(FilePathInfo **head);
+void add_path_info_node(FilePathInfo **head, FilePathInfo *node);
+FilePathInfo* create_new_path_info_node(char* absolute_path, char* relative_folder, char* file_name);

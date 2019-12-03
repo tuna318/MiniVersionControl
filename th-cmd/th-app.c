@@ -12,6 +12,9 @@ void run(int sockfd);                                   // Start the menu
 int login(int sockfd, char* username);                  // Login function
 void logined_menu(int sockfd, char *username);          // Send text function
 int sign_up(int sockfd, char *username);                // Signup handle function
+int create_repo(int sockfd, char *repo_name);           // Create repository
+int list_repo(int sockfd, char* list_repo);             // Get list repo
+int logout(int sockfd);                                 // Logout
 
 int main() { 
     
@@ -118,26 +121,60 @@ void run(int sockfd){
 
 void logined_menu(int sockfd, char *username) {
     char selector;
-    int login_flag = 0;
+    int login_flag = 0, req_status = 0;
+    char repo_name[REPONAME_LEN], list_repositories[MSG_MAX_LEN];
 
     do {
         printf("Logined as %s\n", username);
         printf("------------------------------------------\n");
         printf("1. Create a repository\n");
         printf("2. List repositories\n");
-        printf("3. Logout\n");
-        printf("4. Exit\n");
+        printf("3. Clone repository\n");
+        printf("4. Logout\n");
+        printf("5. Exit\n");
         printf("Your choice: ");
         scanf("%c%*c", &selector);
 
         switch(selector){
             case '1':
+                req_status = create_repo(sockfd, repo_name);
+                if (req_status == STATUS_OK) {
+                    printf("create %s successfully\n", repo_name);
+                } else if (req_status == STATUS_FAILED) {
+                    printf("Failed to create repository!\nTry again\n");
+                } else {
+                    printf("Internal Error!\n");
+                    close(sockfd);
+                    return;
+                }
                 break;
             case '2':
+                req_status = list_repo(sockfd, list_repositories);
+                if (req_status == STATUS_OK) {
+                    printf("List repositories:\n %s\n", list_repositories);
+                } else if (req_status == STATUS_FAILED) {
+                    printf("Failed to get list repositories!\nTry again\n");
+                } else {
+                    printf("Internal Error!\n");
+                    close(sockfd);
+                    return;
+                }
                 break;
             case '3':
                 break;
             case '4':
+                req_status = logout(sockfd);
+                if (req_status == STATUS_OK) {
+                    printf("Logout successfully!\n");
+                    return;
+                } else if (req_status == STATUS_FAILED) {
+                    printf("Uhm.., something went wrong!\nTry again\n");
+                } else {
+                    printf("Internal Error!\n");
+                    close(sockfd);
+                    return;
+                }
+            case '5':
                 close(sockfd);
                 exit(0);
             default:
@@ -190,10 +227,10 @@ int login(int sockfd, char* username){
     if(strcmp(res_status, RESPONSE_OK) == 0){
         bzero(username, USERNAME_LEN);
         strcpy(username, res_username);
-        return 1;
+        return STATUS_OK;
     } 
 
-    return 0;
+    return STATUS_FAILED;
 }
 
 int sign_up(int sockfd, char *username){
@@ -262,8 +299,86 @@ int sign_up(int sockfd, char *username){
     if(strcmp(res_status, RESPONSE_OK) == 0){
         bzero(username, USERNAME_LEN);
         strcpy(username, res_username);
-        return 1;
+        return STATUS_OK;
     }
 
-    return 0;
+    return STATUS_FAILED;
+}
+
+int create_repo(int sockfd, char *repo_name){
+    char send_msg[MSG_MAX_LEN];
+    char receive_msg[MSG_MAX_LEN];
+    char res_repo_name[REPONAME_LEN], res_status[RESPONSE_STATUS_LEN+1];
+    int i;
+
+    do {
+        i = 0;
+        bzero(repo_name, sizeof(repo_name));  
+        printf("Input your repository name: ");
+        while ((repo_name[i++] = getchar()) != '\n');
+        repo_name[i-1] = '\0';
+        if(repo_name[0] == '\0')
+            printf("Repository name can't be blank!");
+    }while (repo_name[0] == '\0');
+
+    create_repo_msg_request_encoder(send_msg, repo_name);
+    write(sockfd, send_msg, sizeof(send_msg));
+    bzero(receive_msg, MSG_MAX_LEN);
+    if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
+        printf("Disconnect from server! Client forced to quit!\n");
+        return SERVER_DISCONNECT;   
+    }
+    
+    create_repo_msg_response_decoder(receive_msg, res_status, res_repo_name);
+    if(strcmp(res_status, RESPONSE_OK) == 0){
+        bzero(repo_name, REPONAME_LEN);
+        strcpy(repo_name, res_repo_name);
+        return STATUS_OK;
+    }
+
+    return STATUS_FAILED;
+}
+
+int list_repo(int sockfd, char* list_repositories){
+    char send_msg[MSG_MAX_LEN];
+    char receive_msg[MSG_MAX_LEN];
+    char res_list_repo[MSG_MAX_LEN], res_status[RESPONSE_STATUS_LEN+1];
+
+    list_repo_msg_request_encoder(send_msg);
+    write(sockfd, send_msg, sizeof(send_msg));
+    bzero(receive_msg, MSG_MAX_LEN);
+    if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
+        printf("Disconnect from server! Client forced to quit!\n");
+        return SERVER_DISCONNECT;   
+    }
+    
+    list_repo_msg_response_decoder(receive_msg, res_status, res_list_repo);
+    if(strcmp(res_status, RESPONSE_OK) == 0){
+        bzero(list_repositories, MSG_MAX_LEN);
+        strcpy(list_repositories, res_list_repo);
+        return STATUS_OK;
+    }
+
+    return STATUS_FAILED;
+}
+
+int logout(int sockfd) {
+    char send_msg[MSG_MAX_LEN];
+    char receive_msg[MSG_MAX_LEN];
+    char res_status[RESPONSE_STATUS_LEN+1];
+
+    logout_msg_request_encoder(send_msg);
+    write(sockfd, send_msg, sizeof(send_msg));
+    bzero(receive_msg, MSG_MAX_LEN);
+    if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
+        printf("Disconnect from server! Client forced to quit!\n");
+        return SERVER_DISCONNECT;   
+    }
+    
+    logout_msg_response_decoder(receive_msg, res_status);
+    if(strcmp(res_status, RESPONSE_OK) == 0){
+        return STATUS_OK;
+    }
+
+    return STATUS_FAILED;
 }

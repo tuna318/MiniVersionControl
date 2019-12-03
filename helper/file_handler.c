@@ -32,6 +32,61 @@ void folder_structure(char *root_path, FILE **fo){
     return;
 }
 
+void get_folder_structure(char *root_path, char *temp_path, FilePathInfo **path_info) {
+    struct dirent *de;  // Pointer for directory entry
+    int i = 0, j, k;
+
+    // opendir() returns a pointer of DIR type
+    DIR *dr = opendir(temp_path);
+
+    if (dr == NULL) {
+        // printf("Could not open current directory");
+        return;
+    }
+
+    char buffer[256];
+    char absolute_path[512];
+    char relative_folder[256];
+    char file_name[128];
+
+    while ((de = readdir(dr)) != NULL) {
+        bzero(buffer, sizeof(buffer));
+        if (strcmp(temp_path, ".") == 0)
+            sprintf(buffer, "%s", de->d_name);
+        else
+            sprintf(buffer, "%s/%s", temp_path, de->d_name);
+        if (isDirectory(buffer) && isValidDirectory(buffer)){
+            sprintf(buffer, "%s", buffer);
+            get_folder_structure(root_path, buffer, &(*path_info));
+        }
+        if(!isDirectory(buffer)){
+            strcpy(absolute_path, buffer);
+            i = strlen(absolute_path);
+            j = 0;
+            k = 0;
+  
+            while (absolute_path[i] != '/') i--;
+            k = i + 1;
+            
+            while (absolute_path[k] != '\0') {
+                file_name[j++] = absolute_path[k++];
+            }
+            file_name[j] = '\0';
+            j = 0;
+
+            for (k = strlen(root_path); k < i; k++) {
+                relative_folder[j++] = absolute_path[k];
+            }
+            relative_folder[j] = '\0';
+
+            add_path_info_node(&(*path_info), create_new_path_info_node(absolute_path, relative_folder, file_name));
+        }
+    }
+
+    closedir(dr);
+    return;
+}
+
 int isDirectory(const char *path) {
    struct stat statbuf;
    if (stat(path, &statbuf) != 0)
@@ -40,7 +95,7 @@ int isDirectory(const char *path) {
 }
 
 int isValidDirectory(const char *path) {
-    if(strcmp(path, th_folder) == 0)
+    if(strcmp(path, TH_FOLDER) == 0)
         return 0;
     int i = strlen(path) - 1;
     int valid_dir_flag = 0;
@@ -54,6 +109,12 @@ int isValidDirectory(const char *path) {
         return 1;
     else 
         return 0;
+}
+
+void create_path(char* absolute_path) {
+  char cmd[MAXLEN];
+  sprintf(cmd, "mkdir -p %s", absolute_path);
+  system(cmd);
 }
 
 void getUserInfo(char *filename, char *username, char *email) {
@@ -96,96 +157,36 @@ void strTokenize(char *string, char strArr[10][MAXLEN], char *delim) {
    return;
 }
 
-// void encode_msg(char FLAG, char *username, char *repo, char *commit, char *file_locate, char* data, char encode_msg[]){
-//     int i, j = 0 ;
-//     bzero(encode_msg, MAXLEN);
+FilePathInfo* create_new_path_info_node(char* absolute_path, char* relative_folder, char* file_name){
+    FilePathInfo *newNode = (FilePathInfo*)malloc(sizeof(FilePathInfo));
+    strcpy(newNode->absolute_path, absolute_path);
+    strcpy(newNode->relative_folder, relative_folder);
+    strcpy(newNode->file_name, file_name);
+    
+    newNode->next = NULL;
+    return newNode;
+}
 
-//     // Add message type
-//     encode_msg[0] = FLAG;
+void add_path_info_node(FilePathInfo **head, FilePathInfo *node){
+    if(*head == NULL){
+        *head = node;
+        return;
+    }
 
-//     // Add user name to header
-//     j = 0;
-//     for (i = USER_START_BYTE; i < strlen(username); i++) {
-//         encode_msg[i] = username[j++];
-//     }
-//     encode_msg[++i] = DELIM_SYM;
+    FilePathInfo *current = *head;
+    while(current->next != NULL){
+        current = current->next;
+    }
+    current->next = node;
+    return;
+}
 
-//     // Add repo name to header
-//     j = 0;
-//     for (i = REPO_START_BYTE; i < strlen(repo), i++) {
-//         encode_msg[i] = repo[j++];
-//     }
-//     encode_msg[++i] = DELIM_SYM;
-
-//     // Add commit name to header
-//     j = 0;
-//     for (i = COMMIT_START_BYTE; i < strlen(commit); i++) {
-//         encode_msg[i] = commit[j++];
-//     }
-//     encode_msg[++i] = DELIM_SYM;
-
-//     // Add file locate to header
-//     j = 0;
-//     for (i = FILELOCATE_START_BYTE; i < strlen(file_locate); i++) {
-//         encode_msg[i] = file_locate[j++];
-//     }
-//     encode_msg[++i] = DELIM_SYM;
-
-//     // Add data to data path
-//     j = 0;
-//     for (i = MSG_START_BYTE; i < strlen(data); i++) {
-//         encode_msg[i] = data[j++];
-//     }
-
-//     encode_msg[++i] = '\0';
-
-//     return;
-// }
-
-// void decode_msg(char *FLAG, char username[], char repo[], char commit[], char file_locate[], char data[], char encoded_msg[]){
-//     int i,j;
-//     // Get FLAG from encoded_msg
-//     *FLAG = encoded_msg[0];
-
-//     // Get username from encoded msg
-//     i = USER_START_BYTE;
-//     j = 0;
-//     while(encoded_msg[i] != DELIM_SYM){
-//         username[j++] = encoded_msg[i++];
-//     }
-//     username[j] = '\0';
-
-//     // Get repo from encoded msg
-//     i = REPO_START_BYTE;
-//     j = 0;
-//     while(encoded_msg[i] != DELIM_SYM){
-//         repo[j++] = encoded_msg[i++];
-//     }
-//     repo[j] = '\0';
-
-//     // Get commit from encoded msg
-//     i = COMMIT_START_BYTE;
-//     j = 0;
-//     while(encoded_msg[i] != DELIM_SYM){
-//         commit[j++] = encoded_msg[i++];
-//     }
-//     commit[j] = '\0';
-
-//     // Get username from encoded msg
-//     i = FILELOCATE_START_BYTE;
-//     j = 0;
-//     while(encoded_msg[i] != DELIM_SYM){
-//         file_locate[j++] = encoded_msg[i++];
-//     }
-//     file_locate[j] = '\0';
-
-//     // Get data from encoded msg
-//     i = MSG_START_BYTE;
-//     j = 0;
-//     while(encoded_msg[i] != '\0'){
-//         data[j++] = encoded_msg[i++];
-//     }
-//     data[j] = '\0';
-
-//     return;
-// }
+void free_path_info_nodes(FilePathInfo **head){
+    FilePathInfo *current = *head;
+    FilePathInfo *temp;
+    while(current != NULL){
+        temp = current;
+        current = current->next;
+        free(temp);        
+    }
+}

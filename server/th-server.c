@@ -86,14 +86,26 @@ void run(int sockfd) {
         if(strcmp(msg_flag, LOGIN_FLAG) == 0) {
             login_flag = login_handler(sockfd, buffer, email, password);
         } else if (strcmp(msg_flag, SIGNUP_FLAG) == 0) {
-            signup_handler(sockfd, buffer, username, email, password);
+            signup_handler(sockfd, buffer);
+        } else if (strcmp(msg_flag, CREATE_REPO_FLAG) == 0 && login_flag == 1) {
+            create_repo_handler(sockfd, buffer, username, email);
+        } else if (strcmp(msg_flag, LIST_REPO_FLAG) == 0 && login_flag == 1) {
+            list_repo_handler(sockfd, buffer, username);
+        } else if (strcmp(msg_flag, LOGOUT_FLAG) == 0 && login_flag == 1) {
+            login_flag = logout_handler(sockfd, buffer);
+            if (login_flag == 0) {
+                bzero(email, sizeof(email));
+                bzero(username, sizeof(username));
+                bzero(password, sizeof(password));
+            }
+        } else if (strcmp(msg_flag, CLONE_REPO_FLAG) == 0 && login_flag == 1) {
+            clone_repo_handler(sockfd, buffer, username);
         } else {
             write(sockfd, CHECK_CONNECTION, strlen(CHECK_CONNECTION));
             return;
         }
-
     } while(1);
-
+    
     return;
 }
 

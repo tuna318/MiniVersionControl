@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MSG_MAX_LEN 1024
+#define MSG_MAX_LEN 2048
+#define FILE_CONTENT_LEN 1024
 
 #define MSG_FLAG_LEN 2
 #define LOGIN_FLAG "01"
@@ -24,6 +25,8 @@
 #define EMAIL_LEN 32
 #define REPONAME_LEN 32
 #define PASSWORD_LEN 32
+#define FILE_LOCATION_LEN 128
+#define FILE_NAME_LEN 128
 
 #define CHECK_CONNECTION "CHECK CONNECTION"
 
@@ -102,6 +105,6 @@ void clone_repo_msg_request_encoder(char* encode_msg, char* repo_name);
 // Clone a repository request message decoder
 void clone_repo_msg_request_decoder(char* encoded_msg, char* repo_name);
 // Clone a repository response message encoder
-void clone_repo_msg_response_encoder(char* encode_msg, char* repo_name, char* file_location, char *file_name, char *content);
+void clone_repo_msg_response_encoder(char* encode_msg, char* response_status, char* repo_name, char* file_location, char *file_name, char *content);
 // Clone a repository response message decoder
 void clone_repo_msg_response_decoder(char* encoded_msg, char *response_status, char* repo_name, char* file_location, char *file_name, char *content);

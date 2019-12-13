@@ -60,6 +60,9 @@ void get_folder_structure(char *root_path, char *temp_path, FilePathInfo **path_
             get_folder_structure(root_path, buffer, &(*path_info));
         }
         if(!isDirectory(buffer)){
+            bzero(absolute_path, sizeof(absolute_path));
+            bzero(relative_folder, sizeof(relative_folder));
+            bzero(file_name, sizeof(file_name));
             strcpy(absolute_path, buffer);
             i = strlen(absolute_path);
             j = 0;
@@ -111,6 +114,26 @@ int isValidDirectory(const char *path) {
         return 0;
 }
 
+void append_file_content(char* absolute_file_path, char* absolute_folder_path, char *content) {
+    FILE *fi;
+    char create_folder_cmd[256];
+    printf("folder_path: %s\n", absolute_folder_path);
+
+    sprintf(create_folder_cmd, "mkdir -p %s", absolute_folder_path);
+    system( create_folder_cmd );
+    printf("file_path: %s\n", absolute_file_path);
+    printf("content: %s\n", content);
+
+    if((fi = fopen(absolute_file_path, "a+")) == NULL) {
+        printf("bad\n");
+        return;
+    }
+    printf("good\n");
+    fprintf(fi, "%s", content);
+    fclose(fi);
+    return;
+}
+
 void create_path(char* absolute_path) {
   char cmd[MAXLEN];
   sprintf(cmd, "mkdir -p %s", absolute_path);
@@ -142,6 +165,29 @@ void getUserInfo(char *filename, char *username, char *email) {
     return;
 }
 
+void get_pwd(char *path){
+  FILE *fp;
+  char temp[1024];
+  int i;
+  bzero(path, sizeof(path));
+
+  /* Open the command for reading. */
+  fp = popen("pwd", "r");
+  if (fp == NULL) {
+    printf("Failed to run command\n" );
+    exit(1);
+  }
+
+  /* Read the output a line at a time - output it. */
+  while(fgets(temp, sizeof(path), fp) != NULL) {
+      strcat(path, temp);
+  }
+  path[strlen(path)-1] = '\0';
+  /* close */
+  pclose(fp);
+
+}
+
 void strTokenize(char *string, char strArr[10][MAXLEN], char *delim) {
     int i = 0;
     char str[MAXLEN];
@@ -159,6 +205,10 @@ void strTokenize(char *string, char strArr[10][MAXLEN], char *delim) {
 
 FilePathInfo* create_new_path_info_node(char* absolute_path, char* relative_folder, char* file_name){
     FilePathInfo *newNode = (FilePathInfo*)malloc(sizeof(FilePathInfo));
+    bzero(newNode->absolute_path, sizeof(newNode->absolute_path));
+    bzero(newNode->relative_folder, sizeof(newNode->relative_folder));
+    bzero(newNode->file_name, sizeof(newNode->file_name));
+
     strcpy(newNode->absolute_path, absolute_path);
     strcpy(newNode->relative_folder, relative_folder);
     strcpy(newNode->file_name, file_name);

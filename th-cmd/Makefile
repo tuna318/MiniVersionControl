@@ -7,5 +7,5 @@ all:
 	make th-cmd
 
 th-cmd:
-	gcc -o th-app th-app.c $(HELPER)/$(SOCKET_VALIDATE) $(HELPER)/$(MESSAGE_HANDLER)
+	gcc -o th-app th-app.c $(HELPER)/$(SOCKET_VALIDATE) $(HELPER)/$(MESSAGE_HANDLER) $(HELPER)/$(FILE_HANDLER)
 	gcc -o th-init th-init.c $(HELPER)/$(FILE_HANDLER)

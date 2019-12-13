@@ -1,6 +1,7 @@
 #include "../helper/socket_validate.h" 
 #include "../helper/network_config.h"
 #include "../helper/message_handler.h"
+#include "../helper/file_handler.h"
 
 #define LOGINED 1
 #define NOT_LOGIN 0
@@ -14,6 +15,7 @@ void logined_menu(int sockfd, char *username);          // Send text function
 int sign_up(int sockfd, char *username);                // Signup handle function
 int create_repo(int sockfd, char *repo_name);           // Create repository
 int list_repo(int sockfd, char* list_repo);             // Get list repo
+int clone_repo(int sockfd, char *repo_name);             // Clone a repo
 int logout(int sockfd);                                 // Logout
 
 int main() { 
@@ -161,6 +163,16 @@ void logined_menu(int sockfd, char *username) {
                 }
                 break;
             case '3':
+                req_status = clone_repo(sockfd, repo_name);
+                if (req_status == STATUS_OK) {
+                    printf("Clone %s successfully!\n", repo_name);
+                } else if (req_status == STATUS_FAILED) {
+                    printf("Failed to clone repository!\nTry again\n");
+                } else {
+                    printf("Internal Error!\n");
+                    close(sockfd);
+                    return;
+                }
                 break;
             case '4':
                 req_status = logout(sockfd);
@@ -360,6 +372,68 @@ int list_repo(int sockfd, char* list_repositories){
     }
 
     return STATUS_FAILED;
+}
+
+int clone_repo(int sockfd, char *repo_name){
+    char send_msg[MSG_MAX_LEN];
+    char receive_msg[MSG_MAX_LEN];
+    char res_repo_name[REPONAME_LEN], res_status[32],
+         file_location[FILE_LOCATION_LEN], file_name[FILE_NAME_LEN],
+         content[FILE_CONTENT_LEN], pwd[256], absolute_file_path[512],
+         absolute_folder_path[256];
+    int i;
+
+    do {
+        i = 0;
+        bzero(repo_name, sizeof(repo_name));  
+        printf("Input your repository name: ");
+        while ((repo_name[i++] = getchar()) != '\n');
+        repo_name[i-1] = '\0';
+        if(repo_name[0] == '\0')
+            printf("Repository name can't be blank!");
+    }while (repo_name[0] == '\0');
+
+    clone_repo_msg_request_encoder(send_msg, repo_name);
+    write(sockfd, send_msg, sizeof(send_msg));
+    do {
+        bzero(receive_msg, MSG_MAX_LEN);
+        bzero(res_repo_name, sizeof(res_repo_name));
+        bzero(res_status, sizeof(res_status));
+        bzero(file_location, sizeof(file_location));
+        bzero(file_name, sizeof(file_name));
+        bzero(content, sizeof(content));
+        bzero(absolute_file_path, sizeof(absolute_file_path));
+        bzero(absolute_folder_path, sizeof(absolute_folder_path));
+
+        if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
+            printf("Disconnect from server! Client forced to quit!\n");
+            return SERVER_DISCONNECT;   
+        }
+        
+        clone_repo_msg_response_decoder(receive_msg, res_status, res_repo_name,
+                                        file_location, file_name, content);
+
+        if(strcmp(res_status, SENDING) == 0){
+            printf("repo name: %s\n", res_repo_name);
+            printf("file location: %s\n", file_location);
+            printf("file name: %s\n", file_name);
+            printf("content: %s\n", content);
+
+            // get absolute path to current folder
+            get_pwd(pwd);
+            sprintf(absolute_folder_path, "%s/%s%s", pwd, res_repo_name, file_location);
+            sprintf(absolute_file_path, "%s/%s", absolute_folder_path, file_name);
+
+            // start writing content 
+            append_file_content(absolute_file_path, absolute_folder_path, content);
+
+            continue;
+        } else if (strcmp(res_status, COMPLETED) == 0){
+            return STATUS_OK;
+        } else {
+            return STATUS_FAILED;
+        }       
+    } while (1);
 }
 
 int logout(int sockfd) {

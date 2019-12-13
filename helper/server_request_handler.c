@@ -75,7 +75,6 @@ int logout_handler(int sockfd, char* buffer) {
 }
 
 void clone_repo_handler(int sockfd, char* buffer, char *username) {
-    char send_msg[MSG_MAX_LEN];
     char repo_name[REPONAME_LEN];
     char main_folder_path[MSG_MAX_LEN];
     char repo_absolute_path[MSG_MAX_LEN];
@@ -84,11 +83,11 @@ void clone_repo_handler(int sockfd, char* buffer, char *username) {
     strcpy(username, "tuna");
     clone_repo_msg_request_decoder(buffer, repo_name);
     get_main_folder_location(main_folder_path);
-    sprintf(repo_absolute_path, "%s/%s/%s", main_folder_path, username, repo_name);
+    sprintf(repo_absolute_path, "%s/storage/%s/%s", main_folder_path, username, repo_name);
 
+    transfer_a_folder(sockfd, repo_absolute_path, repo_name);
 
-    // list_repo_msg_response_encoder(send_msg, list_repo);
-    write(sockfd, send_msg, strlen(send_msg));
+    return;
 }
 
 void get_main_folder_location(char *path){
@@ -122,4 +121,39 @@ void get_main_folder_location(char *path){
   /* close */
   pclose(fp);
 
+}
+
+int transfer_a_folder(int sockfd, char* folder_absolute_path, char *folder_name){
+    FilePathInfo* path_info = NULL, *temp;
+    char line[FILE_CONTENT_LEN], send_msg[MSG_MAX_LEN];
+
+    get_folder_structure(folder_absolute_path,
+                         folder_absolute_path,
+                         &path_info);
+    temp = path_info;
+    while (temp != NULL) {
+        FILE *fi;
+        if((fi = fopen(temp->absolute_path, "r")) == NULL)
+            continue;
+
+        while( fgets(line, FILE_CONTENT_LEN, fi) != NULL ) {
+            bzero(send_msg, sizeof(send_msg));
+            clone_repo_msg_response_encoder(send_msg,
+                                            SENDING, 
+                                            folder_name, 
+                                            temp->relative_folder, 
+                                            temp->file_name,
+                                            line);
+            
+            write(sockfd, send_msg, sizeof(send_msg));
+        }        
+        fclose(fi);
+        temp = temp->next;
+    }
+
+    bzero(send_msg, sizeof(send_msg));
+    clone_repo_msg_response_encoder(send_msg, COMPLETED, "", "", "", "");
+    write(sockfd, send_msg, sizeof(send_msg));
+    free_path_info_nodes(&path_info);
+    return 1;
 }

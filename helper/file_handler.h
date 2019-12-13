@@ -11,7 +11,7 @@
 typedef struct PathInfo {
     char absolute_path[512];
     char relative_folder[256];
-    char file_name[32];
+    char file_name[128];
     struct PathInfo *next;
 } FilePathInfo;
 
@@ -39,6 +39,10 @@ void getUserInfo(char *filename, char *username, char *email);
 void create_path(char* absolute_path);
 // Get folder structure
 void get_folder_structure(char *root_path, char *temp_path, FilePathInfo **path_info);
+// Append content to file
+void append_file_content(char* absolute_file_path, char* absolute_folder_path, char *content);
+// Get pwd result
+void get_pwd(char *path);
 
 
 // Node structure

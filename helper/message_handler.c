@@ -347,12 +347,12 @@ void clone_repo_msg_request_decoder(char* encoded_msg, char* repo_name){
     return;  
 }
 
-void clone_repo_msg_response_encoder(char* encode_msg, char* repo_name, char* file_location, char *file_name, char *content){
+void clone_repo_msg_response_encoder(char* encode_msg, char* response_status, char* repo_name, char* file_location, char *file_name, char *content){
     int i = 0, t = 0;
     bzero(encode_msg, MSG_MAX_LEN);
 
-    while(i < RESPONSE_STATUS_LEN) {
-        encode_msg[i++] = RESPONSE_OK[t++];
+    while(t < strlen(response_status)) {
+        encode_msg[i++] = response_status[t++];
     }
     encode_msg[i++] = '\n';
     t = 0;
@@ -385,7 +385,7 @@ void clone_repo_msg_response_encoder(char* encode_msg, char* repo_name, char* fi
 
 void clone_repo_msg_response_decoder(char* encoded_msg, char *response_status, char* repo_name, char* file_location, char *file_name, char *content){
     int i = 0, t = 0;
-    while(i < RESPONSE_STATUS_LEN){
+    while(encoded_msg[i] != '\n'){
         response_status[t++] = encoded_msg[i++];
     }
     response_status[t] = '\0';

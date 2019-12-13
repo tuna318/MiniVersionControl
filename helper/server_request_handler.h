@@ -10,3 +10,4 @@ int logout_handler(int sockfd, char* buffer);
 void clone_repo_handler(int sockfd, char* buffer, char *username);
 
 void get_main_folder_location(char *path);
+int transfer_a_folder(int sockfd, char* folder_absolute_path, char* folder_name);

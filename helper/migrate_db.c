@@ -22,8 +22,11 @@ int main(void)
                        "INSERT INTO users(name, password, email) VALUES('tuna', '111111', 'tu.na@gmail.com');";
 
     char *repository_table = "DROP TABLE IF EXISTS repositories;"
-                             "CREATE TABLE repositories(id INTEGER PRIMARY KEY, main_account_id INT, contributor_id INT, name TEXT);"
-                             "INSERT INTO repositories(main_account_id, contributor_id, name) VALUES (1, 2, 'programming-network');";
+                             "CREATE TABLE repositories(id INTEGER PRIMARY KEY, user_name INT, name_repo TEXT);"
+                             "INSERT INTO repositories(user_name, name_repo) VALUES ('hanhnguyen' ,'programming-network');"
+                             "INSERT INTO repositories(user_name, name_repo) VALUES ('tuna' ,'miniversion');"
+                             "INSERT INTO repositories(user_name, name_repo) VALUES ('hanhnguyen' ,'mini-network');";
+
 
     rc = sqlite3_exec(db, user_table, 0, 0, &err_msg);
     rc = sqlite3_exec(db, repository_table, 0, 0, &err_msg);

@@ -1,14 +1,14 @@
 #include "message_handler.h"
 
 /**
-* LOGIN HANDLE FUNCTION
+* AUTH HANDLE FUNCTION
 **/
-void login_msg_request_encoder(char* encode_msg, char* email, char* password){
+void auth_msg_request_encoder(char* encode_msg, char* email, char* password){
     int i = 0, t = 0;
     bzero(encode_msg, MSG_MAX_LEN);
 
     while(i < MSG_FLAG_LEN) {
-        encode_msg[i++] = LOGIN_FLAG[t++];
+        encode_msg[i++] = AUTH_FLAG[t++];
     }
     encode_msg[i++] = '\n';
     t = 0;
@@ -27,7 +27,7 @@ void login_msg_request_encoder(char* encode_msg, char* email, char* password){
     return;
 }
 
-void login_msg_request_decoder(char* encoded_msg, char* email, char *password){
+void auth_msg_request_decoder(char* encoded_msg, char* email, char *password){
     int i = MSG_FLAG_LEN + 1, t = 0;
     while(encoded_msg[i] != '\n'){
         email[t++] = encoded_msg[i++];
@@ -42,7 +42,7 @@ void login_msg_request_decoder(char* encoded_msg, char* email, char *password){
     return;  
 }
 
-void login_msg_response_encoder(char* encode_msg, char* username){
+void auth_msg_response_encoder(char* encode_msg, char* username){
     int i = 0, t = 0;
     bzero(encode_msg, MSG_MAX_LEN);
 
@@ -59,7 +59,7 @@ void login_msg_response_encoder(char* encode_msg, char* username){
     return;
 }
 
-void login_msg_response_decoder(char* encoded_msg, char *response_status, char* username){
+void auth_msg_response_decoder(char* encoded_msg, char *response_status, char* username){
     int i = 0, t = 0;
     while(i < RESPONSE_STATUS_LEN){
         response_status[t++] = encoded_msg[i++];
@@ -420,6 +420,72 @@ void clone_repo_msg_response_decoder(char* encoded_msg, char *response_status, c
     i++;
     t = 0;
         
+    return;  
+}
+
+
+/**
+* CHECK NEW COMMITS HANDLE FUNCTION
+**/
+void check_new_commits_msg_request_encoder(char* encode_msg, char* repo_name){
+    int i = 0, t = 0;
+    bzero(encode_msg, MSG_MAX_LEN);
+
+    while(i < MSG_FLAG_LEN) {
+        encode_msg[i++] = CHECK_COMMITS_FLAG[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(repo_name)){
+        encode_msg[i++] = repo_name[t++];
+    }
+    encode_msg[i++] = '\0';
+
+    return;
+}
+
+void check_new_commits_msg_request_decoder(char* encoded_msg, char *repo_name){
+    int i = MSG_FLAG_LEN + 1, t = 0;
+
+    while(encoded_msg[i] != '\0'){
+        repo_name[t++] = encoded_msg[i++];
+    }
+    repo_name[t] = '\0';
+
+    return;  
+}
+
+void check_new_commits_msg_response_encoder(char* encode_msg, char* response_status, char* commit){
+    int i = 0, t = 0;
+    bzero(encode_msg, MSG_MAX_LEN);
+
+    while(t < strlen(response_status)) {
+        encode_msg[i++] = response_status[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(commit)){
+        encode_msg[i++] = commit[t++];
+    }
+    encode_msg[i++] = '\0';
+    return;
+}
+
+void check_new_commits_msg_response_decoder(char* encoded_msg, char *response_status, char *commit){
+    int i = 0, t = 0;
+    while(encoded_msg[i] != '\n'){
+        response_status[t++] = encoded_msg[i++];
+    }
+    response_status[t] = '\0';
+    i++;
+    t = 0;
+
+    while(encoded_msg[i] != '\0'){
+        commit[t++] = encoded_msg[i++];
+    }
+    commit[t] = '\0';
     return;  
 }
 

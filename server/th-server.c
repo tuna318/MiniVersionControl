@@ -1,8 +1,8 @@
 #include "../helper/socket_validate.h" 
 #include "../helper/server_request_handler.h"
 
-void run(int sockfd);      
-void func(int signum); 
+void run(int sockfd);     // Start request processing progress 
+void func(int signum);    // Kill process support function
 
 int main() {
 
@@ -66,7 +66,7 @@ int main() {
 } 
 
 void run(int sockfd) {
-    int login_flag = 0;
+    int auth_flag = 0;
     char buffer[MSG_MAX_LEN], msg_flag[MSG_FLAG_LEN+1];
     char recv_msg[MSG_MAX_LEN], send_msg[MSG_MAX_LEN];
     char email[EMAIL_LEN], username[USERNAME_LEN], password[PASSWORD_LEN];
@@ -83,24 +83,36 @@ void run(int sockfd) {
         memset(msg_flag, '\0', sizeof(msg_flag));
         strncpy(msg_flag, buffer, 2);
 
-        if(strcmp(msg_flag, LOGIN_FLAG) == 0) {
-            login_flag = login_handler(sockfd, buffer, email, password);
+        // check msg flag and handle request corresponding to it
+        if(strcmp(msg_flag, AUTH_FLAG) == 0) {
+            /* Handle Authentication request */
+            auth_flag = auth_handler(sockfd, buffer, email, username);
         } else if (strcmp(msg_flag, SIGNUP_FLAG) == 0) {
+            /* Handle signup request */
             signup_handler(sockfd, buffer);
-        } else if (strcmp(msg_flag, CREATE_REPO_FLAG) == 0 && login_flag == 1) {
+        } else if (strcmp(msg_flag, CREATE_REPO_FLAG) == 0 && auth_flag == 1) {
+            /* Handle create repository request */
             create_repo_handler(sockfd, buffer, username, email);
-        } else if (strcmp(msg_flag, LIST_REPO_FLAG) == 0 && login_flag == 1) {
+        } else if (strcmp(msg_flag, LIST_REPO_FLAG) == 0 && auth_flag == 1) {
+            /* Handle list of repositories request */
             list_repo_handler(sockfd, buffer, username);
-        } else if (strcmp(msg_flag, LOGOUT_FLAG) == 0 && login_flag == 1) {
-            login_flag = logout_handler(sockfd, buffer);
-            if (login_flag == 0) {
+        } else if (strcmp(msg_flag, LOGOUT_FLAG) == 0 && auth_flag == 1) {
+            /* Hanle logout request */
+            auth_flag = logout_handler(sockfd, buffer);
+            // If logout successfully, memset for authenticate variables
+            if (auth_flag == 0) {
                 bzero(email, sizeof(email));
                 bzero(username, sizeof(username));
                 bzero(password, sizeof(password));
             }
-        } else if (strcmp(msg_flag, CLONE_REPO_FLAG) == 0 && login_flag == 1) {
+        } else if (strcmp(msg_flag, CLONE_REPO_FLAG) == 0 && auth_flag == 1) {
+            /* Hanle clone repository request */
             clone_repo_handler(sockfd, buffer, username);
-        } else {
+        } else if (strcmp(msg_flag, CHECK_COMMITS_FLAG) == 0 && auth_flag == 1) {
+            /* Hanle compare commits between server and local request */
+            check_new_commits_handler(sockfd, buffer, username);
+        } 
+        else {
             write(sockfd, CHECK_CONNECTION, strlen(CHECK_CONNECTION));
             return;
         }

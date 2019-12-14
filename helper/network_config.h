@@ -1,3 +1,11 @@
+/*******************
+* NETWORK CONFIGURATION
+********************
+*
+* Setup server IP address and port
+*
+********************/
+
 #include <unistd.h> 
 #include <sys/types.h> 
 #include <sys/socket.h> 

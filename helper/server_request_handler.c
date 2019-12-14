@@ -1,9 +1,10 @@
 #include "server_request_handler.h"
 
-int login_handler(int sockfd, char* buffer, char* email, char* password) {
+int auth_handler(int sockfd, char* buffer, char* email, char* username) {
     char send_msg[MSG_MAX_LEN];
-    login_msg_request_decoder(buffer, email, password);
-    login_msg_response_encoder(send_msg, email);
+    char password[PASSWORD_LEN];
+    auth_msg_request_decoder(buffer, email, password);
+    auth_msg_response_encoder(send_msg, email);
     write(sockfd, send_msg, strlen(send_msg));
     return 1;
 }
@@ -43,7 +44,7 @@ void create_repo_handler(int sockfd, char* buffer, char *username, char*email) {
     bzero(excution_cmd, sizeof(excution_cmd));
     sprintf(naviagte_to_storage_cmd, "cd %s && cd storage/%s && mkdir %s && cd %s", 
             main_folder_path, username, repo_name, repo_name);
-    sprintf(th_init_cmd, "th-init %s %s", username, email);
+    sprintf(th_init_cmd, "th-init %s %s %s", username, email, repo_name);
     strcat(excution_cmd, naviagte_to_storage_cmd);
     strcat(excution_cmd, " && ");
     strcat(excution_cmd, th_init_cmd);
@@ -87,6 +88,42 @@ void clone_repo_handler(int sockfd, char* buffer, char *username) {
 
     transfer_a_folder(sockfd, repo_absolute_path, repo_name);
 
+    return;
+}
+
+void check_new_commits_handler(int sockfd, char* buffer, char* username){
+    char send_msg[MSG_MAX_LEN];
+    char repo_name[REPONAME_LEN];
+    char main_folder_path[MSG_MAX_LEN];
+    char repo_absolute_path[MSG_MAX_LEN];
+    Commit *commit_history, *temp;
+
+    bzero(username, sizeof(username));
+    strcpy(username, "tuna");
+
+    check_new_commits_msg_request_decoder(buffer, repo_name);
+    repo_name[strlen(repo_name)-1] = '\0';
+    get_main_folder_location(main_folder_path);
+    sprintf(repo_absolute_path, "%s/storage/%s/%s", main_folder_path, username, repo_name);
+    get_commits_history(repo_absolute_path, &commit_history);
+
+    temp = commit_history;
+    while(temp != NULL) {
+        bzero(send_msg, MSG_MAX_LEN);
+        check_new_commits_msg_response_encoder(send_msg, SENDING, temp->commit_name);
+        printf("send msg: \n%s\n", send_msg);
+
+        write(sockfd, send_msg, strlen(send_msg));
+        temp = temp->next;
+    }
+    sleep(1);
+    bzero(send_msg, MSG_MAX_LEN);
+    check_new_commits_msg_response_encoder(send_msg, COMPLETED, "\0");
+    printf("send msg: \n%s\n", send_msg);
+    write(sockfd, send_msg, strlen(send_msg));
+    free_commit_nodes(&commit_history);
+
+    printf("done\n");
     return;
 }
 

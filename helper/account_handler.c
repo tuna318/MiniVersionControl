@@ -206,12 +206,3 @@ char *listRepo(char *userName)
 
 	return nameRepos;
 }
-
-int main()
-{
-	char *name = listRepo("tuna");
-	if (name == NULL)
-		return 0;
-	else
-		printf("%s\n", name);
-}

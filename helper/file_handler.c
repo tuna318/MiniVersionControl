@@ -1,37 +1,5 @@
 #include "file_handler.h"
 
-void folder_structure(char *root_path, FILE **fo){
-    struct dirent *de;  // Pointer for directory entry
-
-    // opendir() returns a pointer of DIR type
-    DIR *dr = opendir(root_path);
-
-    if (dr == NULL) {
-        // printf("Could not open current directory");
-        return;
-    }
-
-    char buffer[256];
-
-    while ((de = readdir(dr)) != NULL) {
-        bzero(buffer, sizeof(buffer));
-        if (strcmp(root_path, ".") == 0)
-            sprintf(buffer, "%s", de->d_name);
-        else
-            sprintf(buffer, "%s%s", root_path, de->d_name);
-        if (isDirectory(buffer) && isValidDirectory(buffer)){
-            sprintf(buffer, "%s/", buffer);
-            folder_structure(buffer, &(*fo));
-        }
-        if(!isDirectory(buffer)){
-            fprintf(*fo, "%s\n", buffer);
-        }
-    }
-
-    closedir(dr);
-    return;
-}
-
 void get_folder_structure(char *root_path, char *temp_path, FilePathInfo **path_info) {
     struct dirent *de;  // Pointer for directory entry
     int i = 0, j, k;
@@ -188,6 +156,58 @@ void get_pwd(char *path){
 
 }
 
+void get_commits_history(char* absolute_folder_path, Commit** head) {
+    char commit_file_path[MAXLEN];
+    char line[MAXLEN], full_commit[MAXLEN/2], commit_name[MAXLEN/2];
+    char strArr[10][MAXLEN];
+    Commit *temp;
+    FILE *fi;
+    sprintf(commit_file_path, "%s/.th/%s", absolute_folder_path, COMMIT_FILE);
+    if((fi = fopen(commit_file_path, "r")) == NULL){
+        printf("Unable to open file: %s\n", COMMIT_FILE);
+        return;
+    }
+    // Skip number of commits line
+    if(fgets(line, MAXLEN, fi) == NULL){
+        printf("Ops, something went wrong!\n");
+        return;
+    }
+    while(fgets(line, MAXLEN, fi) != NULL) {
+        line[strlen(line)-1] = '\0';
+        strcpy(full_commit, line);
+        strTokenize(line, strArr, " ");
+        strcpy(commit_name, strArr[0]);
+        add_commit_node(&(*head), create_new_commit_node(full_commit, commit_name));
+    }
+
+    fclose(fi);
+    return;
+}
+
+int get_repo_name(char *repo_name) {
+    FILE *fi;
+    char line[MAXLEN], strArr[10][MAXLEN];
+    char user_file_path[MAXLEN];
+    char pwd[MAXLEN];
+    
+    get_pwd(pwd);
+    sprintf(user_file_path, "%s/.th/%s", pwd, USER_FILE);
+    if((fi = fopen(user_file_path, "r")) == NULL){
+        return 0;
+    }
+
+    while(fgets(line, MAXLEN, fi) != NULL) {
+        strTokenize(line, strArr, " ");
+        if(strcmp(strArr[0], "repository:") == 0){
+            strcpy(repo_name, strArr[1]);
+            return 1;
+        }
+    }
+
+    fclose(fi);
+    return 1;
+}
+
 void strTokenize(char *string, char strArr[10][MAXLEN], char *delim) {
     int i = 0;
     char str[MAXLEN];
@@ -205,9 +225,6 @@ void strTokenize(char *string, char strArr[10][MAXLEN], char *delim) {
 
 FilePathInfo* create_new_path_info_node(char* absolute_path, char* relative_folder, char* file_name){
     FilePathInfo *newNode = (FilePathInfo*)malloc(sizeof(FilePathInfo));
-    bzero(newNode->absolute_path, sizeof(newNode->absolute_path));
-    bzero(newNode->relative_folder, sizeof(newNode->relative_folder));
-    bzero(newNode->file_name, sizeof(newNode->file_name));
 
     strcpy(newNode->absolute_path, absolute_path);
     strcpy(newNode->relative_folder, relative_folder);
@@ -234,6 +251,66 @@ void add_path_info_node(FilePathInfo **head, FilePathInfo *node){
 void free_path_info_nodes(FilePathInfo **head){
     FilePathInfo *current = *head;
     FilePathInfo *temp;
+    while(current != NULL){
+        temp = current;
+        current = current->next;
+        free(temp);        
+    }
+}
+
+Commit* create_new_commit_node(char* full_commit, char* commit_name){
+    Commit *newNode = (Commit*)malloc(sizeof(Commit));
+
+    strcpy(newNode->full_commit, full_commit);
+    strcpy(newNode->commit_name, commit_name);
+    
+    newNode->next = NULL;
+    return newNode;
+}
+
+void add_commit_node(Commit **head, Commit *node){
+    if(*head == NULL){
+        *head = node;
+        return;
+    }
+
+    Commit *current = *head;
+    while(current->next != NULL){
+        current = current->next;
+    }
+    current->next = node;
+    return;
+}
+
+Commit* remove_data_node(Commit *head, char *commit_name) {
+    Commit *temp, *current;
+    if (head == NULL) {
+        return NULL;
+    }
+    
+    current = head;
+    if (strcmp(current->commit_name, commit_name) == 0) {
+        temp = current;
+        head = head->next;
+        free(temp);
+        return head;
+    }
+    while (current->next != NULL) {
+
+        if (strcmp(current->next->commit_name, commit_name) == 0) {
+            printf("y\n");
+            temp = current->next;
+            current->next = current->next->next;
+            free(temp);
+        }
+        current = current->next;
+    }
+    return head;
+}
+
+void free_commit_nodes(Commit **head){
+    Commit *current = *head;
+    Commit *temp;
     while(current != NULL){
         temp = current;
         current = current->next;

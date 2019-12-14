@@ -1,3 +1,12 @@
+
+/*******************
+* MESSAGE HANDLER
+********************
+*
+* Encode/decode request/response and more
+*
+********************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,14 +14,17 @@
 #define MSG_MAX_LEN 2048
 #define FILE_CONTENT_LEN 1024
 
+/* Request flags */
 #define MSG_FLAG_LEN 2
-#define LOGIN_FLAG "01"
+#define AUTH_FLAG "01"
 #define SIGNUP_FLAG "02"
 #define CREATE_REPO_FLAG "03"
 #define LIST_REPO_FLAG "04"
 #define LOGOUT_FLAG "05"
 #define CLONE_REPO_FLAG "06"
+#define CHECK_COMMITS_FLAG "07"
 
+/* Response flags */
 #define RESPONSE_STATUS_LEN 3
 #define RESPONSE_OK "200"
 #define RESPONSE_NOTFOUND "400"
@@ -21,9 +33,11 @@
 #define SENDING "SENDING"
 #define COMPLETED "COMPLETED"
 
+/* Length of some variables */
 #define USERNAME_LEN 32
 #define EMAIL_LEN 32
 #define REPONAME_LEN 32
+#define COMMIT_LEN 32
 #define PASSWORD_LEN 32
 #define FILE_LOCATION_LEN 128
 #define FILE_NAME_LEN 128
@@ -32,63 +46,63 @@
 
 
 /**
-* LOGIN HANDLE FUNCTIONS
+* AUTH HANDLE FUNCTIONS
 **/
-// Login request message encoder
-void login_msg_request_encoder(char* encoded_msg, char* email, char* password);
-// Login request message decoder
-void login_msg_request_decoder(char* encoded_msg, char* email, char *password);
-// Login response message encoder
-void login_msg_response_encoder(char* encode_msg, char* username);
-// Login response message decoder
-void login_msg_response_decoder(char* encoded_msg, char *response_status, char* username);
+// auth request message encoder | Input: @email, @password | Return value: @encode_msg
+void auth_msg_request_encoder(char* encode_msg, char* email, char* password);
+// Auth request message decoder | Input: @encode_msg | Return value: @email, @password
+void auth_msg_request_decoder(char* encoded_msg, char* email, char *password);
+// Auth response message encoder | Input: @username | Return value: @encode_msg
+void auth_msg_response_encoder(char* encode_msg, char* username);
+// Auth response message decoder | Input: @encoded | Return value: @response_status, @username
+void auth_msg_response_decoder(char* encoded_msg, char *response_status, char* username);
 
 /**
 * SIGNUP HANDLE FUNCTIONS
 **/
-// Signup request message encoder
+// Signup request message encoder | Input: @username, @email, @password | Return value: @encode_msg
 void signup_msg_request_encoder(char* encode_msg, char* username, char* email, char* password);
-// Signup request message decoder
+// Signup request message decoder | Input: @encoded_msg | Return value: @username, @email, @password
 void signup_msg_request_decoder(char* encoded_msg, char* username, char* email, char *password);
-// Signup response message encoder
+// Signup response message encoder | Input: @username | Return value: @encode_msg
 void signup_msg_response_encoder(char* encode_msg, char* username);
-// Signup response message dencoder
+// Signup response message dencoder | Input: @encoded_msg| Return value: @response_status, @username
 void signup_msg_response_decoder(char* encoded_msg, char *response_status, char* username);
 
 /**
 * CREATE REPOSITORY HANDLE FUNCTIONS
 **/
-// Create repository request message encoder
+// Create repository request message encoder | Input: @repo_name | Return value: @encode_msg
 void create_repo_msg_request_encoder(char* encode_msg, char* repo_name);
-// Create repository request message decoder
+// Create repository request message decoder | Input: @encoded_msg | Return value: @repo_name
 void create_repo_msg_request_decoder(char* encoded_msg, char* repo_name);
-// Create repository response message encoder
+// Create repository response message encoder | Input: @repo_name | Return value: @encode_msg
 void create_repo_msg_response_encoder(char* encode_msg, char* repo_name);
-// Create repository response message dencoder
+// Create repository response message dencoder | Input: @encoded_msg | Return value: @response_status, @repo_name
 void create_repo_msg_response_decoder(char* encoded_msg, char *response_status, char *repo_name);
 
 /**
 * LIST REPOSITORIES HANDLE FUNCTIONS
 **/
-// List repositories request message encoder
+// List repositories request message encoder | Input: | Return value: @encode_msg
 void list_repo_msg_request_encoder(char* encode_msg);
-// List repositories request message decoder
+// List repositories request message decoder | Input: @encoded_msg | Return value: 
 void list_repo_msg_request_decoder(char* encoded_msg);
-// List repositories response message encoder
+// List repositories response message encoder | Input: @list_repo | Return value: @encode_msg
 void list_repo_msg_response_encoder(char* encode_msg, char* list_repo);
-// List repositories response message dencoder
+// List repositories response message dencoder | Input: @encoded_msg | Return value: @response_status, @list_repo
 void list_repo_msg_response_decoder(char* encoded_msg, char *response_status, char *list_repo);
 
 /**
 * LOGOUT HANDLE FUNCTIONS
 **/
-// Logout request message encoder
+// Logout request message encoder | Input: | Return value: @encode_msg
 void logout_msg_request_encoder(char* encode_msg);
-// Logout request message decoder
+// Logout request message decoder | Input: @encoded_msg | Return value: 
 void logout_msg_request_decoder(char* encoded_msg);
-// Logout response message encoder
+// Logout response message encoder | Input: | Return value: @encode_msg
 void logout_msg_response_encoder(char* encode_msg);
-// Logout response message descoder
+// Logout response message descoder | Input: @encoded_msg | Return value: @response_status
 void logout_msg_response_decoder(char* encoded_msg, char *response_status);
 
 /**
@@ -100,11 +114,23 @@ void send_status_decoder(char* encoded_msg, char *status);
 /**
 * CLONE A REPOSITORY HANDLE FUNCTIONS
 **/
-// Clone a repository request message encoder
+// Clone a repository request message encoder | Input: @repo_name | Return value: @encode_msg
 void clone_repo_msg_request_encoder(char* encode_msg, char* repo_name);
-// Clone a repository request message decoder
+// Clone a repository request message decoder | Input: @encoded_msg | Return value: @repo_name 
 void clone_repo_msg_request_decoder(char* encoded_msg, char* repo_name);
-// Clone a repository response message encoder
+// Clone a repository response message encoder | Input: @response_status, @repo_name, @file_location, @file_name, @content | Return value: @encode_msg
 void clone_repo_msg_response_encoder(char* encode_msg, char* response_status, char* repo_name, char* file_location, char *file_name, char *content);
-// Clone a repository response message decoder
+// Clone a repository response message decoder | Input: @encoded_msg | Return value: @response_status, @repo_name, @file_location, @file_name, @content
 void clone_repo_msg_response_decoder(char* encoded_msg, char *response_status, char* repo_name, char* file_location, char *file_name, char *content);
+
+/**
+* CHECK NEW COMMITS HANDLE FUNCTION
+**/
+// Check for new commits between local and server request message encoder | Input: @repo_name | Return value: @encode_msg
+void check_new_commits_msg_request_encoder(char* encode_msg, char* repo_name);
+// Check for new commits between local and server request message decoder | Input: @encoded_msg | Return value: @repo_name
+void check_new_commits_msg_request_decoder(char* encoded_msg, char* repo_name);
+// Check for new commits between local and server response message encoder | Input: @response_status, @commit | Return value: @encode_msg
+void check_new_commits_msg_response_encoder(char* encode_msg, char* response_status, char* commit);
+// Check for new commits between local and server response message decoder | Input: @encoded_msg | Return value: @response_status, @commit
+void check_new_commits_msg_response_decoder(char* encoded_msg, char *response_status, char *commit);

@@ -80,6 +80,7 @@ void run(int sockfd){
 
         switch(selector){
             case '1':
+                /* Login */
                 login_flag = login(sockfd, username);
                 if (login_flag == LOGINED) {
                     logined_menu(sockfd, username);
@@ -93,7 +94,9 @@ void run(int sockfd){
                     return;
                 }
                 break;
-            case '2':
+
+            case '2': 
+                /* Signup */
                 signup_status = sign_up(sockfd, username);
                 if (signup_status == STATUS_OK) {
                     printf("Account %s registered successfully!\n");
@@ -107,10 +110,13 @@ void run(int sockfd){
                     return;
                 }
                 break;
+
             case '3':
+                /* Exit */
                 printf("Exiting...\n");
                 close(sockfd);
                 return;
+
             default:
                 if (selector == '\n')
                     break;
@@ -139,6 +145,7 @@ void logined_menu(int sockfd, char *username) {
 
         switch(selector){
             case '1':
+                /* Create a repository */
                 req_status = create_repo(sockfd, repo_name);
                 if (req_status == STATUS_OK) {
                     printf("create %s successfully\n", repo_name);
@@ -150,7 +157,9 @@ void logined_menu(int sockfd, char *username) {
                     return;
                 }
                 break;
+
             case '2':
+                /* Show list repositories of current user */
                 req_status = list_repo(sockfd, list_repositories);
                 if (req_status == STATUS_OK) {
                     printf("List repositories:\n %s\n", list_repositories);
@@ -162,7 +171,9 @@ void logined_menu(int sockfd, char *username) {
                     return;
                 }
                 break;
+
             case '3':
+                /* Clone a repository from server to client */
                 req_status = clone_repo(sockfd, repo_name);
                 if (req_status == STATUS_OK) {
                     printf("Clone %s successfully!\n", repo_name);
@@ -174,7 +185,9 @@ void logined_menu(int sockfd, char *username) {
                     return;
                 }
                 break;
+
             case '4':
+                /* Logout */
                 req_status = logout(sockfd);
                 if (req_status == STATUS_OK) {
                     printf("Logout successfully!\n");
@@ -187,8 +200,10 @@ void logined_menu(int sockfd, char *username) {
                     return;
                 }
             case '5':
+                /* Exit program */
                 close(sockfd);
                 exit(0);
+
             default:
                 if (selector == '\n')
                     break;
@@ -206,6 +221,7 @@ int login(int sockfd, char* username){
          res_username[USERNAME_LEN], res_status[RESPONSE_STATUS_LEN+1];
     int i, j;
 
+    // Authentication with email and password
     do {
         i = 0;
         bzero(email, sizeof(email));  
@@ -226,16 +242,19 @@ int login(int sockfd, char* username){
             printf("Password can't be blank!");
     }while (password[0] == '\0');
 
-    login_msg_request_encoder(send_msg, email, password);
+    // Encode and send authentication request to server
+    auth_msg_request_encoder(send_msg, email, password);
     write(sockfd, send_msg, sizeof(send_msg));
     bzero(receive_msg, MSG_MAX_LEN);
+
+    // Check connection between client and server
     if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
         printf("Disconnect from server! Client forced to quit!\n");
         return SERVER_DISCONNECT;   
     }
     
-    login_msg_response_decoder(receive_msg, res_status, res_username);
-
+    // Decode response message and check response status
+    auth_msg_response_decoder(receive_msg, res_status, res_username);
     if(strcmp(res_status, RESPONSE_OK) == 0){
         bzero(username, USERNAME_LEN);
         strcpy(username, res_username);
@@ -252,6 +271,7 @@ int sign_up(int sockfd, char *username){
          res_username[USERNAME_LEN], res_status[RESPONSE_STATUS_LEN+1];
     int i;
 
+    // Input the neccessary information username/email/password/password-vertification
     do {
         i = 0;
         bzero(username, sizeof(username));  
@@ -297,17 +317,19 @@ int sign_up(int sockfd, char *username){
         return -2;
     }
     
-
+    // Encode and send create account request
     signup_msg_request_encoder(send_msg, username, email, password);
     write(sockfd, send_msg, sizeof(send_msg));
     bzero(receive_msg, MSG_MAX_LEN);
+
+    // Check connection between client and server
     if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
         printf("Disconnect from server! Client forced to quit!\n");
         return SERVER_DISCONNECT;   
     }
     
+    // Decode response message and check response status
     signup_msg_response_decoder(receive_msg, res_status, res_username);
-
     if(strcmp(res_status, RESPONSE_OK) == 0){
         bzero(username, USERNAME_LEN);
         strcpy(username, res_username);
@@ -323,6 +345,7 @@ int create_repo(int sockfd, char *repo_name){
     char res_repo_name[REPONAME_LEN], res_status[RESPONSE_STATUS_LEN+1];
     int i;
 
+    // Name of repository want to create
     do {
         i = 0;
         bzero(repo_name, sizeof(repo_name));  
@@ -333,14 +356,18 @@ int create_repo(int sockfd, char *repo_name){
             printf("Repository name can't be blank!");
     }while (repo_name[0] == '\0');
 
+    // Encode message and send creating repository request
     create_repo_msg_request_encoder(send_msg, repo_name);
     write(sockfd, send_msg, sizeof(send_msg));
     bzero(receive_msg, MSG_MAX_LEN);
+
+    // Check connection between client and server
     if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
         printf("Disconnect from server! Client forced to quit!\n");
         return SERVER_DISCONNECT;   
     }
     
+    // Decode message and check response status
     create_repo_msg_response_decoder(receive_msg, res_status, res_repo_name);
     if(strcmp(res_status, RESPONSE_OK) == 0){
         bzero(repo_name, REPONAME_LEN);
@@ -356,14 +383,18 @@ int list_repo(int sockfd, char* list_repositories){
     char receive_msg[MSG_MAX_LEN];
     char res_list_repo[MSG_MAX_LEN], res_status[RESPONSE_STATUS_LEN+1];
 
+    // Encode and send list repositories request
     list_repo_msg_request_encoder(send_msg);
     write(sockfd, send_msg, sizeof(send_msg));
     bzero(receive_msg, MSG_MAX_LEN);
+
+    // Check connection between client and server
     if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
         printf("Disconnect from server! Client forced to quit!\n");
         return SERVER_DISCONNECT;   
     }
     
+    // Decode response message and check response message
     list_repo_msg_response_decoder(receive_msg, res_status, res_list_repo);
     if(strcmp(res_status, RESPONSE_OK) == 0){
         bzero(list_repositories, MSG_MAX_LEN);
@@ -383,6 +414,7 @@ int clone_repo(int sockfd, char *repo_name){
          absolute_folder_path[256];
     int i;
 
+    // Repository name that you want to clone
     do {
         i = 0;
         bzero(repo_name, sizeof(repo_name));  
@@ -393,9 +425,11 @@ int clone_repo(int sockfd, char *repo_name){
             printf("Repository name can't be blank!");
     }while (repo_name[0] == '\0');
 
+    // Encode and send clone repository request
     clone_repo_msg_request_encoder(send_msg, repo_name);
     write(sockfd, send_msg, sizeof(send_msg));
     do {
+        // Memory set for variables
         bzero(receive_msg, MSG_MAX_LEN);
         bzero(res_repo_name, sizeof(res_repo_name));
         bzero(res_status, sizeof(res_status));
@@ -405,26 +439,23 @@ int clone_repo(int sockfd, char *repo_name){
         bzero(absolute_file_path, sizeof(absolute_file_path));
         bzero(absolute_folder_path, sizeof(absolute_folder_path));
 
+        // Check connection between client and server    
         if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
             printf("Disconnect from server! Client forced to quit!\n");
             return SERVER_DISCONNECT;   
         }
         
+        // Decode response message and check for response status
         clone_repo_msg_response_decoder(receive_msg, res_status, res_repo_name,
                                         file_location, file_name, content);
 
         if(strcmp(res_status, SENDING) == 0){
-            printf("repo name: %s\n", res_repo_name);
-            printf("file location: %s\n", file_location);
-            printf("file name: %s\n", file_name);
-            printf("content: %s\n", content);
-
             // get absolute path to current folder
             get_pwd(pwd);
             sprintf(absolute_folder_path, "%s/%s%s", pwd, res_repo_name, file_location);
             sprintf(absolute_file_path, "%s/%s", absolute_folder_path, file_name);
 
-            // start writing content 
+            // start writing content to file
             append_file_content(absolute_file_path, absolute_folder_path, content);
 
             continue;
@@ -441,14 +472,18 @@ int logout(int sockfd) {
     char receive_msg[MSG_MAX_LEN];
     char res_status[RESPONSE_STATUS_LEN+1];
 
+    // Encode and send logout message
     logout_msg_request_encoder(send_msg);
     write(sockfd, send_msg, sizeof(send_msg));
     bzero(receive_msg, MSG_MAX_LEN);
+
+    // Check connection between client and server    
     if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
         printf("Disconnect from server! Client forced to quit!\n");
         return SERVER_DISCONNECT;   
     }
     
+    // Decode message and check for response status
     logout_msg_response_decoder(receive_msg, res_status);
     if(strcmp(res_status, RESPONSE_OK) == 0){
         return STATUS_OK;

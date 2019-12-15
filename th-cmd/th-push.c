@@ -1,7 +1,6 @@
+#include "../helper/transfer_handler.h"
 #include "../helper/socket_validate.h" 
 #include "../helper/network_config.h"
-#include "../helper/message_handler.h"
-#include "../helper/file_handler.h"
 
 #define LOGINED 1
 #define NOT_LOGIN 0
@@ -113,7 +112,7 @@ void run(int sockfd){
         bzero(send_msg, sizeof(send_msg));
 
         // Get the different commit between client and server
-        check_new_commits_msg_request_encoder(send_msg, repo_name);
+        get_server_commits_msg_request_encoder(send_msg, repo_name);
         write(sockfd, send_msg, sizeof(send_msg));
         do {
             bzero(receive_msg, MSG_MAX_LEN);
@@ -127,7 +126,7 @@ void run(int sockfd){
             }
 
             // Decode response message  
-            check_new_commits_msg_response_decoder(receive_msg, res_status, commit);
+            get_server_commits_msg_response_decoder(receive_msg, res_status, commit);
             if(strcmp(res_status, SENDING) == 0){
                 // Remove same commit from list of server-local different commits
                 different_commits = remove_data_node(different_commits, commit);
@@ -145,11 +144,19 @@ void run(int sockfd){
         } while(1);
 
         // Push all new commits to server
+        char absolute_commit_path[MSG_MAX_LEN];
         temp = different_commits;
+        repo_name[strlen(repo_name)-1] = '\0';
+        int i =0;
         while(temp != NULL){
-            printf("left-commit: %s\n", temp->commit_name);
+
+            sprintf(absolute_commit_path, "%s/.th/commits/%s", pwd, temp->commit_name);
+            printf("abs commit path: %s\n", absolute_commit_path);
+            transfer_a_commit(sockfd, repo_name, temp, absolute_commit_path);
             temp = temp->next;
+
         }
+        printf("Send completed\n");
         
     }
     free_commit_nodes(&different_commits);

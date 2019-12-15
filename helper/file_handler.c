@@ -85,6 +85,7 @@ int isValidDirectory(const char *path) {
 void append_file_content(char* absolute_file_path, char* absolute_folder_path, char *content) {
     FILE *fi;
     char create_folder_cmd[256];
+    printf("\n-------------------------------\n");
     printf("folder_path: %s\n", absolute_folder_path);
 
     sprintf(create_folder_cmd, "mkdir -p %s", absolute_folder_path);
@@ -99,6 +100,8 @@ void append_file_content(char* absolute_file_path, char* absolute_folder_path, c
     printf("good\n");
     fprintf(fi, "%s", content);
     fclose(fi);
+    printf("\n-------------------------------\n");
+
     return;
 }
 
@@ -221,6 +224,31 @@ void strTokenize(char *string, char strArr[10][MAXLEN], char *delim) {
    }
 
    return;
+}
+
+void addCommitToLog(char *commit_file_path, char *commit_msg) {
+    FILE *fc;
+    char first_line[MAXLEN], temp[MAXLEN/4];
+    int number_of_commits;
+    if ((fc = fopen(commit_file_path, "r+")) == NULL){
+        printf("Unable to open file %s\n", commit_file_path);
+        return;
+    }
+
+    // Move the cusor to begining of the file
+    rewind(fc);
+    if (fgets(first_line, MAXLEN, fc) != NULL)
+        sscanf(first_line, "%d %s", &number_of_commits, temp);
+    // Increase number of commits
+    number_of_commits++;
+    
+    // Update commit_log
+    fseek(fc, 0, SEEK_END);
+    fprintf(fc, "%s\n", commit_msg);
+    rewind(fc);
+    fprintf(fc, "%d commits", number_of_commits);
+
+    fclose(fc);
 }
 
 FilePathInfo* create_new_path_info_node(char* absolute_path, char* relative_folder, char* file_name){

@@ -100,6 +100,13 @@ void get_commits_history(char* absolute_folder_path, Commit** head);
 */
 int get_repo_name(char *repo_name);
 
+
+/* < Add Commit To Commit Log >
+* @commit_file_path (input): path to the commit file
+* @commit_msg (input): commmit message
+*/
+void addCommitToLog(char *commit_file_path, char *commit_msg);
+
 /* Path Information Node  */
 void free_path_info_nodes(FilePathInfo **head);
 void add_path_info_node(FilePathInfo **head, FilePathInfo *node);

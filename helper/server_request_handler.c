@@ -1,4 +1,5 @@
 #include "server_request_handler.h"
+#include "account_handler.h"
 
 int auth_handler(int sockfd, char* buffer, char* email, char* username) {
     char send_msg[MSG_MAX_LEN];
@@ -14,8 +15,13 @@ void signup_handler(int sockfd, char* buffer) {
     char username[USERNAME_LEN], email[EMAIL_LEN], password[PASSWORD_LEN];
     char main_folder_path[MSG_MAX_LEN];
     char excution_cmd[MSG_MAX_LEN];
+    char *nameResponse = malloc(50 * (sizeof(char)));
+    *nameResponse = '\0';
 
     signup_msg_request_decoder(buffer, username, email, password);
+    nameResponse = createAccount(email, username, password);
+    if(nameResponse != NULL)  strcpy(username,nameResponse);
+
     get_main_folder_location(main_folder_path);
 
     // Create excution cmd

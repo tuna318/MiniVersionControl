@@ -11,19 +11,19 @@ sqlite3_stmt *res;
 
 
 //login 
-const char *loginAuth(char *email, char *password);
+char *loginAuth(char *email, char *password);
 
 //signUp
-const char *createAccount(char *email, char *name, char *password);
+char *createAccount(char *email, char *name, char *password);
 
 //logout
 void logout();
 
 //create repo
-const char *createRepo(char *userName, char *nameRepo);
+char *createRepo(char *userName, char *nameRepo);
 
 //list Repo
-char *listRepo(char *email);
+char *listRepo(char *userName);
 
 //clone Repo
-const char *isExistingRepo(char *userName, char *nameRepo);
+char *isExistingRepo(char *userName, char *nameRepo);

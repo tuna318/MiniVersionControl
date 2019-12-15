@@ -4,7 +4,7 @@
 #include <string.h>
 #include "account_handler.h"
 
-const char *createAccount(char *email, char *name, char *password)
+char *createAccount(char *email, char *name, char *password)
 {
 	int rc = sqlite3_open("test.db", &db);
 
@@ -27,6 +27,8 @@ const char *createAccount(char *email, char *name, char *password)
 	else
 	{
 		fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+		sqlite3_finalize(res);
+		sqlite3_close(db);
 		return FAIL_DB;
 	}
 
@@ -34,6 +36,8 @@ const char *createAccount(char *email, char *name, char *password)
 	if (step == SQLITE_ROW)
 	{
 		printf("This account existed in system!\n");
+		sqlite3_finalize(res);
+		sqlite3_close(db);
 		return NULL;
 	}
 	else
@@ -48,20 +52,23 @@ const char *createAccount(char *email, char *name, char *password)
 		else
 		{
 			fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+			sqlite3_finalize(res);
+			sqlite3_close(db);
 			return FAIL_DB;
 		}
 		rc = sqlite3_step(res);
 		if (rc != SQLITE_DONE)
 		{
-			printf("ERROR inserting data: %s\n", sqlite3_errmsg(db));
+			printf("execution failed: %s\n", sqlite3_errmsg(db));
+			sqlite3_finalize(res);
+			sqlite3_close(db);
 			return FAIL_DB;
 		}
-		sqlite3_finalize(res);
 		return name;
 	}
 }
 
-const char *loginAuth(char *email, char *password)
+char *loginAuth(char *email, char *password)
 {
 
 	int rc = sqlite3_open("test.db", &db);
@@ -80,19 +87,31 @@ const char *loginAuth(char *email, char *password)
 		sqlite3_bind_text(res, 2, password, -1, 0);
 	}
 	else
+	{
 		fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+		sqlite3_finalize(res);
+		sqlite3_close(db);
+		return FAIL_DB;
+	}
 	if (sqlite3_step(res) == SQLITE_ROW)
 	{
-		return sqlite3_column_text(res, 1);
+		char *name = malloc(50 * (sizeof(char)));
+		*name = '\0';		
+		strcpy(name, sqlite3_column_text(res, 1));
+		sqlite3_finalize(res);
+		sqlite3_close(db);
+		return name;
 	}
 	else
 	{
 		printf("Email or password not correct\n");
+		sqlite3_finalize(res);
+		sqlite3_close(db);
 		return NULL;
 	}
 }
 
-const char *createRepo(char *userName, char *nameRepo)
+char *createRepo(char *userName, char *nameRepo)
 {
 
 	int rc = sqlite3_open("test.db", &db);
@@ -110,10 +129,17 @@ const char *createRepo(char *userName, char *nameRepo)
 		sqlite3_bind_text(res, 1, nameRepo, -1, 0);
 	}
 	else
+	{
 		fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+		sqlite3_finalize(res);
+		sqlite3_close(db);
+		return FAIL_DB;
+	}
 	if (sqlite3_step(res) == SQLITE_ROW)
 	{
 		printf("Name of repositories existed\n");
+		sqlite3_finalize(res);
+		sqlite3_close(db);
 		return NULL;
 	}
 	else
@@ -127,20 +153,25 @@ const char *createRepo(char *userName, char *nameRepo)
 		else
 		{
 			fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+			sqlite3_finalize(res);
+			sqlite3_close(db);
 			return FAIL_DB;
 		}
 		rc = sqlite3_step(res);
 		if (rc != SQLITE_DONE)
 		{
 			printf("ERROR inserting data: %s\n", sqlite3_errmsg(db));
+			sqlite3_finalize(res);
+			sqlite3_close(db);
 			return FAIL_DB;
 		}
 		sqlite3_finalize(res);
+		sqlite3_close(db);
 		return nameRepo;
 	}
 }
 
-const char *isExistingRepo(char *userName, char *nameRepo)
+char *isExistingRepo(char *userName, char *nameRepo)
 {
 	int rc = sqlite3_open("test.db", &db);
 
@@ -157,15 +188,24 @@ const char *isExistingRepo(char *userName, char *nameRepo)
 		sqlite3_bind_text(res, 1, nameRepo, -1, 0);
 	}
 	else
+	{
 		fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+		sqlite3_finalize(res);
+		sqlite3_close(db);
+		return FAIL_DB;
+	}
 	rc = sqlite3_step(res);
 	if (rc != SQLITE_ROW)
 	{
 		printf("Repository does not exist\n");
+		sqlite3_finalize(res);
+		sqlite3_close(db);
 		return NULL;
 	}
 	else
 	{
+		sqlite3_finalize(res);
+		sqlite3_close(db);
 		return nameRepo;
 	}
 }
@@ -186,12 +226,18 @@ char *listRepo(char *userName)
 		sqlite3_bind_text(res, 1, userName, -1, 0);
 	}
 	else
+	{
 		fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+		sqlite3_finalize(res);
+		sqlite3_close(db);
+	}
 
 	rc = sqlite3_step(res);
 	if (rc != SQLITE_ROW)
 	{
 		printf("User has no repository\n");
+		sqlite3_finalize(res);
+		sqlite3_close(db);
 		return NULL;
 	}
 	char *nameRepos = malloc(100 * (sizeof(char)));
@@ -204,5 +250,7 @@ char *listRepo(char *userName)
 		rc = sqlite3_step(res);
 	};
 
+	sqlite3_finalize(res);
+	sqlite3_close(db);
 	return nameRepos;
 }

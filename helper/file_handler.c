@@ -86,18 +86,15 @@ void append_file_content(char* absolute_file_path, char* absolute_folder_path, c
     FILE *fi;
     char create_folder_cmd[256];
     printf("\n-------------------------------\n");
-    printf("folder_path: %s\n", absolute_folder_path);
-
     sprintf(create_folder_cmd, "mkdir -p %s", absolute_folder_path);
     system( create_folder_cmd );
     printf("file_path: %s\n", absolute_file_path);
-    printf("content: %s\n", content);
 
     if((fi = fopen(absolute_file_path, "a+")) == NULL) {
-        printf("bad\n");
+        printf("Failed\n");
         return;
     }
-    printf("good\n");
+    printf("Ok\n");
     fprintf(fi, "%s", content);
     fclose(fi);
     printf("\n-------------------------------\n");

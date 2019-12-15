@@ -6,9 +6,8 @@
 *
 ********************/
 
-#include "../helper/message_handler.h"
 #include "../helper/network_config.h"
-#include "../helper/file_handler.h"
+#include "../helper/transfer_handler.h"
 
 /* < Authentication Handler >
 * @sockfd (input): socket file descriptor
@@ -66,10 +65,21 @@ int get_server_commits_handler(int sockfd, char* buffer, char* username);
 */
 int push_commits_handler(int sockfd, char* buffer, char* username);
 
+/* < Define name of repository will be pulled  >
+* 
+* @sockfd (input): socket file descriptor
+* @buffer (input): request buffer sent from client
+* @username (input): use for query db
+* @head (return value): list of commits that server will later send back to client
+*/
+int pull_commits_handler(int sockfd, char* buffer, char* username);
+
+
 /* < Get location path of MiniVersionControl >
 * @path (return value): location path of MiniVersionControl
 */
 void get_main_folder_location(char *path);
+
 
 /* < Transfer a folder to client >
 * @sockfd (input): socket file descriptor

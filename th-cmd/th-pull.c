@@ -59,7 +59,7 @@ void run(int sockfd){
     char pwd[MSG_MAX_LEN/2];
     char email[EMAIL_LEN], password[PASSWORD_LEN], username[USERNAME_LEN], 
          res_status[RESPONSE_STATUS_LEN+1], commit[COMMIT_LEN], repo_name[REPONAME_LEN];
-    Commit *different_commits, *temp;
+    Commit *local_commits, *temp;
     int i, j;
 
     if(get_repo_name(repo_name) == 0) {
@@ -69,7 +69,7 @@ void run(int sockfd){
     
     // Get current repository commit file absolute path
     get_pwd(pwd);
-    get_commits_history(pwd, &different_commits);
+    get_commits_history(pwd, &local_commits);
 
     printf("Repository: %s", repo_name);
 
@@ -101,7 +101,7 @@ void run(int sockfd){
     // Check if server is working or not
     if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
         printf("Disconnect from server! Client forced to quit!\n");
-        free_commit_nodes(&different_commits);
+        free_commit_nodes(&local_commits);
         return;   
     }
     
@@ -111,49 +111,68 @@ void run(int sockfd){
     if(strcmp(res_status, RESPONSE_OK) == 0){
         bzero(send_msg, sizeof(send_msg));
 
-        // Get the different commit between client and server
-        get_server_commits_msg_request_encoder(send_msg, repo_name);
-        write(sockfd, send_msg, sizeof(send_msg));
-        do {
-            bzero(receive_msg, MSG_MAX_LEN);
-            bzero(commit, sizeof(commit));
-            bzero(res_status, sizeof(res_status));
+        // Request to send local commit logs
+        define_pull_repo_msg_request_encoder(send_msg, PULL_FLAG, repo_name);
+        write(sockfd, send_msg, MSG_MAX_LEN);
+        bzero(receive_msg, MSG_MAX_LEN);
 
-            // Check connection betweeen server and client
+        // Check if server is working or not
+        if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
+            printf("Disconnect from server! Client forced to quit!\n");
+            free_commit_nodes(&local_commits);
+            return;   
+        }
+
+        define_pull_repo_msg_response_decoder(receive_msg, res_status);
+        if(strcmp(res_status, RESPONSE_OK) == 0) {
+            // Send local commit to server
+            temp = local_commits;
+            while(temp != NULL) {
+                bzero(send_msg, sizeof(send_msg));
+                send_local_commits_msg_request_encoder(send_msg, SENDING, temp->commit_name);
+                write(sockfd, send_msg, sizeof(send_msg));
+                temp = temp->next;
+
+            }
+            send_local_commits_msg_request_encoder(send_msg, COMPLETED, "");
+            write(sockfd, send_msg, sizeof(send_msg));
+        }
+        
+        // Get commit data from server and processing
+        char res_repo[REPONAME_LEN], commit_name[COMMIT_LEN], relative_folder[MSG_MAX_LEN/4],
+             file_name[64], content[MSG_MAX_LEN/2], absolute_file_path[MSG_MAX_LEN/4],
+             absolute_folder_path[MSG_MAX_LEN/4];
+        get_pwd(pwd);
+        do {
+            // check connection
             if(read(sockfd, receive_msg, sizeof(receive_msg)) <= 0){
                 printf("Disconnect from server! Client forced to quit!\n");
+                free_commit_nodes(&local_commits);
                 return;   
             }
-
-            // Decode response message  
-            get_server_commits_msg_response_decoder(receive_msg, res_status, commit);
-            if(strcmp(res_status, SENDING) == 0){
-                // Remove same commit from list of server-local different commits
-                different_commits = remove_data_node(different_commits, commit);
+            // Decode the message from server
+            send_commits_request_decoder(receive_msg, res_status, res_repo, 
+                                 commit_name, relative_folder, file_name, content);
+            if(strcmp(res_status, SENDING) == 0 ){
+                sprintf(absolute_folder_path, "%s/.th/commits/%s%s", pwd, commit_name, relative_folder);
+                sprintf(absolute_file_path, "%s/%s", absolute_folder_path, file_name);
+                printf("abs_path: %s\n", absolute_file_path);
+                // start writing content to file
+                append_file_content(absolute_file_path, absolute_folder_path, content);
                 continue;
-            } else if (strcmp(res_status, COMPLETED) == 0){
-                // Break loop if server completely sent all server's repository commits 
-                printf("break\n");
-                break;
-            } else {
-                // Uhmhh, something went wrong that I don't know
-                printf("Something went wrong!\n");
-                free_commit_nodes(&different_commits);
-                break;
-            } 
-        } while(1);
+            } else if (strcmp(res_status, COMPLETED) == 0) {
+                char commit_file_path[MSG_MAX_LEN/4];
 
-        // Push all new commits to server
-        char absolute_commit_path[MSG_MAX_LEN];
-        temp = different_commits;
-        repo_name[strlen(repo_name)-1] = '\0';
-        while(temp != NULL){
-            sprintf(absolute_commit_path, "%s/.th/commits/%s", pwd, temp->commit_name);
-            transfer_a_commit(sockfd, repo_name, temp, absolute_commit_path);
-            temp = temp->next;
-        }
-        printf("Push completed\n");
+                sprintf(commit_file_path, "%s/.th/%s", pwd, COMMIT_FILE);
+                addCommitToLog(commit_file_path, content);
+
+                continue;
+            } else {
+                break;
+            }
+        } while (1);
+        printf("Pull completed\n");
     }
-    free_commit_nodes(&different_commits);
+    free_commit_nodes(&local_commits);
     return;
 }

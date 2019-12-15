@@ -13,3 +13,4 @@ th-cmd:
 	gcc -o th-commit th-commit.c $(HELPER)/$(FILE_HANDLER)
 	gcc -o th-log th-log.c $(HELPER)/$(FILE_HANDLER)
 	gcc -o th-push th-push.c $(HELPER)/$(TRANSFER_HANDLER) $(HELPER)/$(MESSAGE_HANDLER) $(HELPER)/$(FILE_HANDLER)  $(HELPER)/$(SOCKET_VALIDATE)
+	gcc -o th-pull th-pull.c $(HELPER)/$(TRANSFER_HANDLER) $(HELPER)/$(MESSAGE_HANDLER) $(HELPER)/$(FILE_HANDLER)  $(HELPER)/$(SOCKET_VALIDATE)

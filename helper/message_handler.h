@@ -34,6 +34,7 @@
 
 #define SENDING "SENDING"
 #define COMPLETED "COMPLETED"
+#define PULL_COMPLETED "PULL_COMPLETED"
 
 /* Length of some variables */
 #define USERNAME_LEN 32
@@ -136,6 +137,28 @@ void get_server_commits_msg_request_decoder(char* encoded_msg, char* repo_name);
 void get_server_commits_msg_response_encoder(char* encode_msg, char* response_status, char* commit);
 // Compare commits between local and server response message decoder | Input: @encoded_msg | Return value: @response_status, @commit
 void get_server_commits_msg_response_decoder(char* encoded_msg, char *response_status, char *commit);
+
+
+/**
+* DEFINE PULLIN REPOSITORY HANDLE FUNCTION
+**/
+// Define which repository will be pulled request message encoder
+void define_pull_repo_msg_request_encoder(char *encode_msg, char *msg_flag, char *repo_name);
+// Define which repository will be pulled request message encoder
+void define_pull_repo_msg_request_decoder(char *encoded_msg, char *repo_name);
+// Define which repository will be pulled response message encoder
+void define_pull_repo_msg_response_encoder(char* encode_msg, char *response_status);
+// Define which repository will be pulled response message decoder
+void define_pull_repo_msg_response_decoder(char* encoded_msg, char *response_status);
+
+
+/***
+* SEND LOCAL COMMIT LOGS HANDLER
+***/
+// Compare commits between local and server response message encoder | Input: @request_status, @commit | Return value: @encode_msg
+void send_local_commits_msg_request_encoder(char* encode_msg, char* request_status, char* commit);
+// Compare commits between local and server response message decoder | Input: @encoded_msg | Return value: @request_status, @commit
+void send_local_commits_msg_request_decoder(char* encoded_msg, char* request_status, char* commit);
 
 /**
 * SEND COMMITS HANDLER

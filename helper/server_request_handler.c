@@ -3,6 +3,9 @@
 int auth_handler(int sockfd, char* buffer, char* email, char* username) {
     char send_msg[MSG_MAX_LEN];
     char password[PASSWORD_LEN];
+    bzero(username, sizeof(username));
+    strcpy(username, "tuna");
+
     auth_msg_request_decoder(buffer, email, password);
     auth_msg_response_encoder(send_msg, email);
     write(sockfd, send_msg, strlen(send_msg));
@@ -49,8 +52,6 @@ void create_repo_handler(int sockfd, char* buffer, char *username, char*email) {
     strcat(excution_cmd, " && ");
     strcat(excution_cmd, th_init_cmd);
 
-    printf("cmd: %s\n", excution_cmd);
-
     system(excution_cmd);
 
     create_repo_msg_response_encoder(send_msg, repo_name);
@@ -80,8 +81,6 @@ void clone_repo_handler(int sockfd, char* buffer, char *username) {
     char main_folder_path[MSG_MAX_LEN];
     char repo_absolute_path[MSG_MAX_LEN];
 
-    bzero(username, sizeof(username));
-    strcpy(username, "tuna");
     clone_repo_msg_request_decoder(buffer, repo_name);
     get_main_folder_location(main_folder_path);
     sprintf(repo_absolute_path, "%s/storage/%s/%s", main_folder_path, username, repo_name);
@@ -101,9 +100,6 @@ int get_server_commits_handler(int sockfd, char* buffer, char* username){
     char request_status[32], commit[COMMIT_LEN], file_location[FILE_LOCATION_LEN],
          file_name[FILE_NAME_LEN], content[MSG_MAX_LEN];
     Commit *commit_history, *temp;
-
-    bzero(username, sizeof(username));
-    strcpy(username, "tuna");
 
     get_server_commits_msg_request_decoder(buffer, repo_name);
     repo_name[strlen(repo_name)-1] = '\0';
@@ -130,7 +126,6 @@ int get_server_commits_handler(int sockfd, char* buffer, char* username){
 }
 
 int push_commits_handler(int sockfd, char* buffer, char* username) {
-    printf("Push commits handler here\n");
     char received_msg[MSG_MAX_LEN], send_msg[MSG_MAX_LEN];
     char main_folder_path[MSG_MAX_LEN/4];
     char absolute_folder_path[MSG_MAX_LEN/4], absolute_file_path[MSG_MAX_LEN/4];
@@ -157,8 +152,6 @@ int push_commits_handler(int sockfd, char* buffer, char* username) {
         get_main_folder_location(main_folder_path);
         sprintf(commit_file_path, "%s/storage/%s/%s/.th/%s", main_folder_path, username,
                                                              repo_name, COMMIT_FILE);
-        printf("commit_file_path: %s\n", commit_file_path);
-        printf("full_commit: %s\n", content);
         addCommitToLog(commit_file_path, content);
 
         return 1;
@@ -166,6 +159,59 @@ int push_commits_handler(int sockfd, char* buffer, char* username) {
     return 0;
 }
 
+int pull_commits_handler(int sockfd, char* buffer, char* username) {
+    Commit *commit_log, *temp;
+    char repo_name[REPONAME_LEN], request_status[32], commit[COMMIT_LEN];
+    char send_msg[MSG_MAX_LEN], received_msg[MSG_MAX_LEN];
+    char main_folder_path[MSG_MAX_LEN];
+    char repo_absolute_path[MSG_MAX_LEN];
+
+    // Decode request msg and get list of commit corresponding to repository
+    define_pull_repo_msg_request_decoder(buffer, repo_name);
+    get_main_folder_location(main_folder_path);
+    sprintf(repo_absolute_path, "%s/storage/%s/%s", main_folder_path, username, repo_name);
+    get_commits_history(repo_absolute_path , &commit_log);
+    
+    // Encode message and notify the client 
+    define_pull_repo_msg_response_encoder(send_msg, RESPONSE_OK);
+    write(sockfd, send_msg, sizeof(send_msg));
+
+    // Filter commits 
+    do {
+        bzero(received_msg, sizeof(received_msg));
+        if(read(sockfd, received_msg, sizeof(received_msg)) <= 0){
+            return 0;   
+        }
+
+        send_local_commits_msg_request_decoder(received_msg, request_status, commit);
+
+        if(strcmp(request_status, SENDING) == 0){
+            // Remove same commit from list of server-local different commits
+            commit_log = remove_data_node(commit_log, commit);
+            continue;
+        } else if (strcmp(request_status, COMPLETED) == 0){
+            break;
+        } else {
+            printf("Something went wrong!\n");
+            return -1;
+        } 
+    } while(1);
+
+    // Send commits to client 
+    char absolute_commit_path[MSG_MAX_LEN];
+    temp = commit_log;
+    while (temp != NULL) {
+        sprintf(absolute_commit_path, "%s/storage/%s/%s/.th/commits/%s", main_folder_path, username, 
+                                                                     repo_name, temp->commit_name);
+        transfer_a_commit(sockfd, repo_name, temp, absolute_commit_path);
+        temp = temp->next;
+    }
+    bzero(send_msg, sizeof(send_msg));
+    send_commits_request_encoder(send_msg, "", PULL_COMPLETED, "", "", "", "", "");
+    write(sockfd, send_msg, sizeof(send_msg));
+    printf("PULL DONE\n");
+    return 1;
+}
 
 void get_main_folder_location(char *path){
   FILE *fp;

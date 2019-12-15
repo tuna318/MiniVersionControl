@@ -630,3 +630,88 @@ void send_status_decoder(char* encoded_msg, char *status){
     return;  
 }
 
+
+/**
+* SEND COMMIT LOG HANDLER
+**/
+void define_pull_repo_msg_request_encoder(char *encode_msg, char *msg_flag, char *repo_name){
+    int i = 0, t = 0;
+    bzero(encode_msg, MSG_MAX_LEN);
+
+    while(t < strlen(msg_flag)) {
+        encode_msg[i++] = msg_flag[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(repo_name)){
+        encode_msg[i++] = repo_name[t++];
+    }
+    encode_msg[i++] = '\0';
+}
+
+void define_pull_repo_msg_request_decoder(char *encoded_msg, char *repo_name){
+    int i = MSG_FLAG_LEN + 1, t = 0;
+
+    while(encoded_msg[i] != '\n'){
+        repo_name[t++] = encoded_msg[i++];
+    }
+    repo_name[t] = '\0';
+}
+
+void define_pull_repo_msg_response_encoder(char* encode_msg, char *response_status){
+    int i = 0, t = 0;
+    bzero(encode_msg, MSG_MAX_LEN);
+
+    while(t < strlen(response_status)) {
+        encode_msg[i++] = response_status[t++];
+    }
+    encode_msg[i++] = '\0';
+}
+
+void define_pull_repo_msg_response_decoder(char* encoded_msg, char *response_status) {
+    int i = 0, t = 0;
+    while(encoded_msg[i] != '\n'){
+        response_status[t++] = encoded_msg[i++];
+    }
+    response_status[t] = '\0';
+    return;
+}
+
+/***
+* SEND LOCAL COMMIT LOG HANDLER
+***/
+void send_local_commits_msg_request_encoder(char* encode_msg, char* request_status, char* commit){
+    int i = 0, t = 0;
+    bzero(encode_msg, MSG_MAX_LEN);
+
+    while(t < strlen(request_status)) {
+        encode_msg[i++] = request_status[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(commit)){
+        encode_msg[i++] = commit[t++];
+    }
+    encode_msg[i++] = '\0';
+    
+    return;
+}
+
+void send_local_commits_msg_request_decoder(char* encoded_msg, char* request_status, char* commit){
+    int i = 0, t = 0;
+    while(encoded_msg[i] != '\n'){
+        request_status[t++] = encoded_msg[i++];
+    }
+    request_status[t] = '\0';
+    i++;
+    t = 0;
+
+    while(encoded_msg[i] != '\0'){
+        commit[t++] = encoded_msg[i++];
+    }
+    commit[t] = '\0';
+        
+    return;  
+}

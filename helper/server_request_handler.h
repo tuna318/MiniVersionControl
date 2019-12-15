@@ -54,8 +54,17 @@ void clone_repo_handler(int sockfd, char* buffer, char *username);
 * 
 * @sockfd (input): socket file descriptor
 * @buffer (input): request buffer sent from client
+* @username (input): use for query db
 */
-void check_new_commits_handler(int sockfd, char* buffer, char* username);
+int get_server_commits_handler(int sockfd, char* buffer, char* username);
+
+/* < Push Commits handler >
+* 
+* @sockfd (input): socket file descriptor
+* @buffer (input): request buffer sent from client
+* @username (input): use for query db
+*/
+int push_commits_handler(int sockfd, char* buffer, char* username);
 
 /* < Get location path of MiniVersionControl >
 * @path (return value): location path of MiniVersionControl

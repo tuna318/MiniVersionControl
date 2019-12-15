@@ -66,7 +66,7 @@ int main() {
 } 
 
 void run(int sockfd) {
-    int auth_flag = 0;
+    int auth_flag = 0, get_commits_flag = 0, push_status = 0;
     char buffer[MSG_MAX_LEN], msg_flag[MSG_FLAG_LEN+1];
     char recv_msg[MSG_MAX_LEN], send_msg[MSG_MAX_LEN];
     char email[EMAIL_LEN], username[USERNAME_LEN], password[PASSWORD_LEN];
@@ -77,7 +77,7 @@ void run(int sockfd) {
         if((read(sockfd, buffer, sizeof(buffer))) <= 0)
             return;
 
-        printf("buffer:\n %s\n", buffer);
+        // printf("buffer:\n %s\n", buffer);
 
         // Get the msg flag
         memset(msg_flag, '\0', sizeof(msg_flag));
@@ -110,9 +110,15 @@ void run(int sockfd) {
             clone_repo_handler(sockfd, buffer, username);
         } else if (strcmp(msg_flag, CHECK_COMMITS_FLAG) == 0 && auth_flag == 1) {
             /* Hanle compare commits between server and local request */
-            check_new_commits_handler(sockfd, buffer, username);
-        } 
-        else {
+            get_commits_flag = get_server_commits_handler(sockfd, buffer, username);
+        } else if (strcmp(msg_flag, PUSH_FLAG) == 0 && auth_flag == 1 && get_commits_flag == 1) {
+            /* Handle push commits from client */
+            push_status = push_commits_handler(sockfd, buffer, username);
+            if (push_status ==  1)
+                get_commits_flag = 1;
+            else 
+                get_commits_flag = 0;
+        } else {
             write(sockfd, CHECK_CONNECTION, strlen(CHECK_CONNECTION));
             return;
         }

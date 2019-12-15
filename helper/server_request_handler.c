@@ -91,17 +91,21 @@ void clone_repo_handler(int sockfd, char* buffer, char *username) {
     return;
 }
 
-void check_new_commits_handler(int sockfd, char* buffer, char* username){
-    char send_msg[MSG_MAX_LEN];
+int get_server_commits_handler(int sockfd, char* buffer, char* username){
+    char send_msg[MSG_MAX_LEN], received_msg[MSG_MAX_LEN];
     char repo_name[REPONAME_LEN];
     char main_folder_path[MSG_MAX_LEN];
     char repo_absolute_path[MSG_MAX_LEN];
+    char absolute_file_path[MSG_MAX_LEN];
+    char absolute_folder_path[MSG_MAX_LEN];
+    char request_status[32], commit[COMMIT_LEN], file_location[FILE_LOCATION_LEN],
+         file_name[FILE_NAME_LEN], content[MSG_MAX_LEN];
     Commit *commit_history, *temp;
 
     bzero(username, sizeof(username));
     strcpy(username, "tuna");
 
-    check_new_commits_msg_request_decoder(buffer, repo_name);
+    get_server_commits_msg_request_decoder(buffer, repo_name);
     repo_name[strlen(repo_name)-1] = '\0';
     get_main_folder_location(main_folder_path);
     sprintf(repo_absolute_path, "%s/storage/%s/%s", main_folder_path, username, repo_name);
@@ -110,22 +114,58 @@ void check_new_commits_handler(int sockfd, char* buffer, char* username){
     temp = commit_history;
     while(temp != NULL) {
         bzero(send_msg, MSG_MAX_LEN);
-        check_new_commits_msg_response_encoder(send_msg, SENDING, temp->commit_name);
-        printf("send msg: \n%s\n", send_msg);
+        get_server_commits_msg_response_encoder(send_msg, SENDING, temp->commit_name);
 
         write(sockfd, send_msg, strlen(send_msg));
         temp = temp->next;
     }
+    // Sleep for a while, or client can't catch up
     sleep(1);
     bzero(send_msg, MSG_MAX_LEN);
-    check_new_commits_msg_response_encoder(send_msg, COMPLETED, "\0");
-    printf("send msg: \n%s\n", send_msg);
+    get_server_commits_msg_response_encoder(send_msg, COMPLETED, "\0");
     write(sockfd, send_msg, strlen(send_msg));
     free_commit_nodes(&commit_history);
 
-    printf("done\n");
-    return;
+    return 1;
 }
+
+int push_commits_handler(int sockfd, char* buffer, char* username) {
+    printf("Push commits handler here\n");
+    char received_msg[MSG_MAX_LEN], send_msg[MSG_MAX_LEN];
+    char main_folder_path[MSG_MAX_LEN/4];
+    char absolute_folder_path[MSG_MAX_LEN/4], absolute_file_path[MSG_MAX_LEN/4];
+    char request_status[32], repo_name[REPONAME_LEN], commit_name[COMMIT_LEN],
+         relative_folder[MSG_MAX_LEN/4], file_name[FILE_NAME_LEN], content[MSG_MAX_LEN/2];
+
+
+    // Decode the message from client
+    send_commits_request_decoder(buffer, request_status, repo_name, 
+                                 commit_name, relative_folder, file_name, content);
+    
+    if(strcmp(request_status, SENDING) == 0 ){
+        get_main_folder_location(main_folder_path);
+        sprintf(absolute_folder_path, "%s/storage/%s/%s/.th/commits/%s%s", 
+                                            main_folder_path, username, repo_name, 
+                                            commit_name, relative_folder);
+        sprintf(absolute_file_path, "%s/%s", absolute_folder_path, file_name);
+        // start writing content to file
+        append_file_content(absolute_file_path, absolute_folder_path, content);
+        return 1;
+    } else if (strcmp(request_status, COMPLETED) == 0) {
+        char commit_file_path[MSG_MAX_LEN/4];
+
+        get_main_folder_location(main_folder_path);
+        sprintf(commit_file_path, "%s/storage/%s/%s/.th/%s", main_folder_path, username,
+                                                             repo_name, COMMIT_FILE);
+        printf("commit_file_path: %s\n", commit_file_path);
+        printf("full_commit: %s\n", content);
+        addCommitToLog(commit_file_path, content);
+
+        return 1;
+    }
+    return 0;
+}
+
 
 void get_main_folder_location(char *path){
   FILE *fp;

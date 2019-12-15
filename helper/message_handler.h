@@ -23,6 +23,8 @@
 #define LOGOUT_FLAG "05"
 #define CLONE_REPO_FLAG "06"
 #define CHECK_COMMITS_FLAG "07"
+#define PUSH_FLAG "08"
+#define PULL_FLAG "09"
 
 /* Response flags */
 #define RESPONSE_STATUS_LEN 3
@@ -126,11 +128,23 @@ void clone_repo_msg_response_decoder(char* encoded_msg, char *response_status, c
 /**
 * CHECK NEW COMMITS HANDLE FUNCTION
 **/
-// Check for new commits between local and server request message encoder | Input: @repo_name | Return value: @encode_msg
-void check_new_commits_msg_request_encoder(char* encode_msg, char* repo_name);
-// Check for new commits between local and server request message decoder | Input: @encoded_msg | Return value: @repo_name
-void check_new_commits_msg_request_decoder(char* encoded_msg, char* repo_name);
-// Check for new commits between local and server response message encoder | Input: @response_status, @commit | Return value: @encode_msg
-void check_new_commits_msg_response_encoder(char* encode_msg, char* response_status, char* commit);
-// Check for new commits between local and server response message decoder | Input: @encoded_msg | Return value: @response_status, @commit
-void check_new_commits_msg_response_decoder(char* encoded_msg, char *response_status, char *commit);
+// Compare commits between local and server request message encoder | Input: @repo_name | Return value: @encode_msg
+void get_server_commits_msg_request_encoder(char* encode_msg, char* repo_name);
+// Compare commits between local and server request message decoder | Input: @encoded_msg | Return value: @repo_name
+void get_server_commits_msg_request_decoder(char* encoded_msg, char* repo_name);
+// Compare commits between local and server response message encoder | Input: @response_status, @commit | Return value: @encode_msg
+void get_server_commits_msg_response_encoder(char* encode_msg, char* response_status, char* commit);
+// Compare commits between local and server response message decoder | Input: @encoded_msg | Return value: @response_status, @commit
+void get_server_commits_msg_response_decoder(char* encoded_msg, char *response_status, char *commit);
+
+/**
+* SEND COMMITS HANDLER
+*/
+// Send commits request message encoder | Input: @response_status, @repo_name, @commit, @file_location, @file_name, @content | Return value: @encode_msg
+void send_commits_request_encoder(char* encode_msg, char *msg_type, char* request_status, char* repo_name, char* commit, char* file_location, char *file_name, char *content);
+// Send commits request message decoder | Input: @encoded_msg | Return value:@response_status, @repo_name, @commit, @file_location, @file_name, @content
+void send_commits_request_decoder(char* encoded_msg, char *request_status, char* repo_name, char* commit, char* file_location, char *file_name, char *content);
+// Send commits response message encoder | Input: @response_status | Return value: @encode_msg
+void send_msg_response_encoder(char* encode_msg, char *response_status);
+// Send commits response message descoder | Input: @encoded_msg | Return value: @response_status
+void send_msg_response_decoder(char* encoded_msg, char *response_status);

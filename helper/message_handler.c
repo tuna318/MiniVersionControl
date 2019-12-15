@@ -427,7 +427,7 @@ void clone_repo_msg_response_decoder(char* encoded_msg, char *response_status, c
 /**
 * CHECK NEW COMMITS HANDLE FUNCTION
 **/
-void check_new_commits_msg_request_encoder(char* encode_msg, char* repo_name){
+void get_server_commits_msg_request_encoder(char* encode_msg, char* repo_name){
     int i = 0, t = 0;
     bzero(encode_msg, MSG_MAX_LEN);
 
@@ -445,7 +445,7 @@ void check_new_commits_msg_request_encoder(char* encode_msg, char* repo_name){
     return;
 }
 
-void check_new_commits_msg_request_decoder(char* encoded_msg, char *repo_name){
+void get_server_commits_msg_request_decoder(char* encoded_msg, char *repo_name){
     int i = MSG_FLAG_LEN + 1, t = 0;
 
     while(encoded_msg[i] != '\0'){
@@ -456,7 +456,7 @@ void check_new_commits_msg_request_decoder(char* encoded_msg, char *repo_name){
     return;  
 }
 
-void check_new_commits_msg_response_encoder(char* encode_msg, char* response_status, char* commit){
+void get_server_commits_msg_response_encoder(char* encode_msg, char* response_status, char* commit){
     int i = 0, t = 0;
     bzero(encode_msg, MSG_MAX_LEN);
 
@@ -473,7 +473,7 @@ void check_new_commits_msg_response_encoder(char* encode_msg, char* response_sta
     return;
 }
 
-void check_new_commits_msg_response_decoder(char* encoded_msg, char *response_status, char *commit){
+void get_server_commits_msg_response_decoder(char* encoded_msg, char *response_status, char *commit){
     int i = 0, t = 0;
     while(encoded_msg[i] != '\n'){
         response_status[t++] = encoded_msg[i++];
@@ -487,6 +487,124 @@ void check_new_commits_msg_response_decoder(char* encoded_msg, char *response_st
     }
     commit[t] = '\0';
     return;  
+}
+
+/**
+* SEND COMMITS HANDLER
+**/
+void send_commits_request_encoder(char* encode_msg, char* msg_flag, char* request_status, char* repo_name, char* commit, char* file_location, char *file_name, char *content){
+    int i = 0, t = 0;
+    bzero(encode_msg, MSG_MAX_LEN);
+
+    while(t < strlen(msg_flag)) {
+        encode_msg[i++] = msg_flag[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(request_status)) {
+        encode_msg[i++] = request_status[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(repo_name)){
+        encode_msg[i++] = repo_name[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(commit)){
+        encode_msg[i++] = commit[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(file_location)){
+        encode_msg[i++] = file_location[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(file_name)){
+        encode_msg[i++] = file_name[t++];
+    }
+    encode_msg[i++] = '\n';
+    t = 0;
+
+    while(t < strlen(content)){
+        encode_msg[i++] = content[t++];
+    }
+    encode_msg[i++] = '\0';
+
+    return;
+}
+
+void send_commits_request_decoder(char* encoded_msg, char *request_status, char* repo_name, char* commit, char* file_location, char *file_name, char *content){
+    int i = MSG_FLAG_LEN + 1, t = 0;
+    while(encoded_msg[i] != '\n'){
+        request_status[t++] = encoded_msg[i++];
+    }
+    request_status[t] = '\0';
+    i++;
+    t = 0;
+
+    while(encoded_msg[i] != '\n'){
+        repo_name[t++] = encoded_msg[i++];
+    }
+    repo_name[t] = '\0';
+    i++;
+    t = 0;
+
+    while(encoded_msg[i] != '\n'){
+        commit[t++] = encoded_msg[i++];
+    }
+    commit[t] = '\0';
+    i++;
+    t = 0;
+
+    while(encoded_msg[i] != '\n'){
+        file_location[t++] = encoded_msg[i++];
+    }
+    file_location[t] = '\0';
+    i++;
+    t = 0;
+
+    while(encoded_msg[i] != '\n'){
+        file_name[t++] = encoded_msg[i++];
+    }
+    file_name[t] = '\0';
+    i++;
+    t = 0;
+    
+    while(encoded_msg[i] != '\0'){
+        content[t++] = encoded_msg[i++];
+    }
+    content[t] = '\0';
+    i++;
+    t = 0;
+        
+    return;  
+}
+
+void send_msg_response_encoder(char* encode_msg, char *response_status){
+    int i = 0, t = 0;
+    bzero(encode_msg, MSG_MAX_LEN);
+
+    while(t < strlen(response_status)) {
+        encode_msg[i++] = response_status[t++];
+    }
+    encode_msg[i++] = '\0';
+    return;
+}
+
+void send_msg_response_decoder(char* encoded_msg, char *response_status){
+    int i = 0, t = 0;
+    while(encoded_msg[i] != '\n'){
+        response_status[t++] = encoded_msg[i++];
+    }
+    response_status[t] = '\0';
+    return;
 }
 
 /**
@@ -511,3 +629,4 @@ void send_status_decoder(char* encoded_msg, char *status){
     status[t] = '\0';
     return;  
 }
+

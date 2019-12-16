@@ -153,6 +153,8 @@ void run(int sockfd){
             temp = temp->next;
         }
         printf("Push completed\n");
+    } else {
+        printf("ERROR: Email or password was wrong!\n");
     }
     free_commit_nodes(&different_commits);
     return;

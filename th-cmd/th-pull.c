@@ -172,7 +172,8 @@ void run(int sockfd){
             }
         } while (1);
         printf("Pull completed\n");
+    } else {
+        printf("ERROR: Email or password was wrong!\n");
     }
-    free_commit_nodes(&local_commits);
     return;
 }

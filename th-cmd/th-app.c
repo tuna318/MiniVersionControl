@@ -467,6 +467,22 @@ int clone_repo(int sockfd, char *repo_name){
 
             continue;
         } else if (strcmp(res_status, COMPLETED) == 0){
+            char pwd[MSG_MAX_LEN/4], repo_path[MSG_MAX_LEN/4];
+            char cmd[MSG_MAX_LEN/4];
+            Commit *local_commit, *temp;
+
+            get_pwd(pwd);
+            sprintf(repo_path, "%s/%s", pwd, repo_name);
+            get_commits_history(repo_path, &local_commit);
+
+            temp = local_commit;
+            while(temp != NULL) {
+                if (temp->next == NULL) {
+                    sprintf(cmd, "cd %s && cp .th/commits/%s/* .", repo_name, temp->commit_name);
+                    system(cmd);
+                }
+                temp = temp->next;
+            }
             return STATUS_OK;
         } else {
             return STATUS_FAILED;

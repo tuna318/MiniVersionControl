@@ -34,6 +34,7 @@
 
 #define SENDING "SENDING"
 #define COMPLETED "COMPLETED"
+#define FAILED "FAILED"
 #define PULL_COMPLETED "PULL_COMPLETED"
 
 /* Length of some variables */
@@ -56,7 +57,7 @@ void auth_msg_request_encoder(char* encode_msg, char* email, char* password);
 // Auth request message decoder | Input: @encode_msg | Return value: @email, @password
 void auth_msg_request_decoder(char* encoded_msg, char* email, char *password);
 // Auth response message encoder | Input: @username | Return value: @encode_msg
-void auth_msg_response_encoder(char* encode_msg, char* username);
+void auth_msg_response_encoder(char* encode_msg, char *response_status, char* username);
 // Auth response message decoder | Input: @encoded | Return value: @response_status, @username
 void auth_msg_response_decoder(char* encoded_msg, char *response_status, char* username);
 
@@ -67,8 +68,8 @@ void auth_msg_response_decoder(char* encoded_msg, char *response_status, char* u
 void signup_msg_request_encoder(char* encode_msg, char* username, char* email, char* password);
 // Signup request message decoder | Input: @encoded_msg | Return value: @username, @email, @password
 void signup_msg_request_decoder(char* encoded_msg, char* username, char* email, char *password);
-// Signup response message encoder | Input: @username | Return value: @encode_msg
-void signup_msg_response_encoder(char* encode_msg, char* username);
+// Signup response message encoder | Input: @username, @response_status | Return value: @encode_msg
+void signup_msg_response_encoder(char* encode_msg, char *response_status, char* username);
 // Signup response message dencoder | Input: @encoded_msg| Return value: @response_status, @username
 void signup_msg_response_decoder(char* encoded_msg, char *response_status, char* username);
 
@@ -80,7 +81,7 @@ void create_repo_msg_request_encoder(char* encode_msg, char* repo_name);
 // Create repository request message decoder | Input: @encoded_msg | Return value: @repo_name
 void create_repo_msg_request_decoder(char* encoded_msg, char* repo_name);
 // Create repository response message encoder | Input: @repo_name | Return value: @encode_msg
-void create_repo_msg_response_encoder(char* encode_msg, char* repo_name);
+void create_repo_msg_response_encoder(char* encode_msg, char *response_status, char* repo_name);
 // Create repository response message dencoder | Input: @encoded_msg | Return value: @response_status, @repo_name
 void create_repo_msg_response_decoder(char* encoded_msg, char *response_status, char *repo_name);
 
@@ -92,7 +93,7 @@ void list_repo_msg_request_encoder(char* encode_msg);
 // List repositories request message decoder | Input: @encoded_msg | Return value: 
 void list_repo_msg_request_decoder(char* encoded_msg);
 // List repositories response message encoder | Input: @list_repo | Return value: @encode_msg
-void list_repo_msg_response_encoder(char* encode_msg, char* list_repo);
+void list_repo_msg_response_encoder(char* encode_msg, char *response_status, char* list_repo);
 // List repositories response message dencoder | Input: @encoded_msg | Return value: @response_status, @list_repo
 void list_repo_msg_response_decoder(char* encoded_msg, char *response_status, char *list_repo);
 

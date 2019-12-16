@@ -1,6 +1,7 @@
-#include <stdio.h>
+#include "file_handler.h"
 #include <sqlite3.h>
-#include <stdlib.h>
+
+
 #define FAIL_DB "connect to db failed"
 #define ARR_NUMBER 50
 //define db and SQL statement

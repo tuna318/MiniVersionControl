@@ -1,5 +1,4 @@
-#include "account_handler.h"
-#include <string.h>
+#include "../helper/account_handler.h"
 
 void checkSignUpNew()
 {

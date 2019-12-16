@@ -82,6 +82,17 @@ int isValidDirectory(const char *path) {
         return 0;
 }
 
+char* get_db_location(){
+    char *db_location;
+    char app_main_folder[MAXLEN/2];
+
+    db_location = (char*)malloc(MAXLEN/2);
+
+    get_main_folder_location(app_main_folder);
+    sprintf(db_location, "%s/storage/%s", app_main_folder, DB);
+    return db_location;
+}
+
 void append_file_content(char* absolute_file_path, char* absolute_folder_path, char *content) {
     FILE *fi;
     char create_folder_cmd[256];
@@ -257,6 +268,39 @@ FilePathInfo* create_new_path_info_node(char* absolute_path, char* relative_fold
     
     newNode->next = NULL;
     return newNode;
+}
+
+void get_main_folder_location(char *path){
+  FILE *fp;
+  char temp[1024];
+  int i;
+  bzero(path, sizeof(path));
+
+  /* Open the command for reading. */
+  fp = popen("which th-server", "r");
+  if (fp == NULL) {
+    printf("Failed to run command\n" );
+    exit(1);
+  }
+
+  /* Read the output a line at a time - output it. */
+  while(fgets(temp, sizeof(path), fp) != NULL) {
+      strcat(path, temp);
+      bzero(temp, sizeof(temp));
+  }
+  i = strlen(path);
+  while(path[i] != '/'){
+      path[i--] = '\0';
+  }
+  i--;
+  while(path[i] != '/'){
+      path[i--] = '\0';
+  }
+  path[i] = '\0';
+
+  /* close */
+  pclose(fp);
+
 }
 
 void add_path_info_node(FilePathInfo **head, FilePathInfo *node){

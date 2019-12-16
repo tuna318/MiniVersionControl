@@ -74,13 +74,6 @@ int push_commits_handler(int sockfd, char* buffer, char* username);
 */
 int pull_commits_handler(int sockfd, char* buffer, char* username);
 
-
-/* < Get location path of MiniVersionControl >
-* @path (return value): location path of MiniVersionControl
-*/
-void get_main_folder_location(char *path);
-
-
 /* < Transfer a folder to client >
 * @sockfd (input): socket file descriptor
 * @folder_absolute_path (input): absolute path to transfer folder

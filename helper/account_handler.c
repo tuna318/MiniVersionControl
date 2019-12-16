@@ -1,12 +1,10 @@
-#include <stdio.h>
-#include <sqlite3.h>
-#include <stdlib.h>
-#include <string.h>
 #include "account_handler.h"
 
 char *createAccount(char *email, char *name, char *password)
-{
-	int rc = sqlite3_open("test.db", &db);
+{	
+	char *db_path = get_db_location();
+
+	int rc = sqlite3_open(db_path, &db);
 
 	if (rc != SQLITE_OK)
 	{
@@ -70,8 +68,9 @@ char *createAccount(char *email, char *name, char *password)
 
 char *loginAuth(char *email, char *password)
 {
+	char *db_path = get_db_location();
 
-	int rc = sqlite3_open("test.db", &db);
+	int rc = sqlite3_open(db_path, &db);
 
 	if (rc != SQLITE_OK)
 	{
@@ -113,8 +112,9 @@ char *loginAuth(char *email, char *password)
 
 char *createRepo(char *userName, char *nameRepo)
 {
+	char *db_path = get_db_location();
 
-	int rc = sqlite3_open("test.db", &db);
+	int rc = sqlite3_open(db_path, &db);
 
 	if (rc != SQLITE_OK)
 	{
@@ -172,8 +172,10 @@ char *createRepo(char *userName, char *nameRepo)
 }
 
 char *isExistingRepo(char *userName, char *nameRepo)
-{
-	int rc = sqlite3_open("test.db", &db);
+{	
+	char *db_path = get_db_location();
+
+	int rc = sqlite3_open(db_path, &db);
 
 	if (rc != SQLITE_OK)
 	{
@@ -211,8 +213,10 @@ char *isExistingRepo(char *userName, char *nameRepo)
 }
 
 char *listRepo(char *userName)
-{
-	int rc = sqlite3_open("test.db", &db);
+{	
+	char *db_path = get_db_location();
+
+	int rc = sqlite3_open(db_path, &db);
 
 	if (rc != SQLITE_OK)
 	{

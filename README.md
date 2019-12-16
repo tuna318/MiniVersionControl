@@ -34,3 +34,15 @@ run app
 ```
 th-app
 ```
+commit:
+```
+th-commit -m "message"
+```
+pull:
+```
+th-pull
+```
+push:
+```
+th-push
+```

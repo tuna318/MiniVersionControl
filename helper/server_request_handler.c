@@ -1,16 +1,26 @@
 #include "server_request_handler.h"
-#include "account_handler.h"
+// #include "account_handler.h"
 
 int auth_handler(int sockfd, char* buffer, char* email, char* username) {
     char send_msg[MSG_MAX_LEN];
-    char password[PASSWORD_LEN];
-    bzero(username, sizeof(username));
-    strcpy(username, "tuna");
+    char decode_password[PASSWORD_LEN];
+    char decode_email[EMAIL_LEN];
+    char *nameResponse;
 
-    auth_msg_request_decoder(buffer, email, password);
-    auth_msg_response_encoder(send_msg, email);
-    write(sockfd, send_msg, strlen(send_msg));
-    return 1;
+    auth_msg_request_decoder(buffer, decode_email, decode_password);
+    nameResponse = loginAuth(decode_email, decode_password);
+    if(nameResponse != NULL) {
+        strcpy(email, decode_email);
+        strcpy(username, nameResponse);
+        auth_msg_response_encoder(send_msg, RESPONSE_OK, nameResponse);
+        write(sockfd, send_msg, strlen(send_msg));
+        return 1;
+    } else {
+        auth_msg_response_encoder(send_msg, RESPONSE_NOTFOUND, "");
+        write(sockfd, send_msg, strlen(send_msg));
+        return 0;
+    }
+    
 }
 
 void signup_handler(int sockfd, char* buffer) {
@@ -18,23 +28,27 @@ void signup_handler(int sockfd, char* buffer) {
     char username[USERNAME_LEN], email[EMAIL_LEN], password[PASSWORD_LEN];
     char main_folder_path[MSG_MAX_LEN];
     char excution_cmd[MSG_MAX_LEN];
-    char *nameResponse = malloc(50 * (sizeof(char)));
-    *nameResponse = '\0';
+    char *nameResponse;
 
     signup_msg_request_decoder(buffer, username, email, password);
     nameResponse = createAccount(email, username, password);
-    if(nameResponse != NULL)  strcpy(username,nameResponse);
 
-    get_main_folder_location(main_folder_path);
+    // return OK if success in create account, else return NOTFOUND
+    if(nameResponse != NULL) {
+        get_main_folder_location(main_folder_path);
+        // Create excution cmd
+        bzero(excution_cmd, sizeof(excution_cmd));
+        sprintf(excution_cmd, "cd %s && cd storage && mkdir %s", 
+                main_folder_path, nameResponse);
+        system(excution_cmd);
 
-    // Create excution cmd
-    bzero(excution_cmd, sizeof(excution_cmd));
-    sprintf(excution_cmd, "cd %s && cd storage && mkdir %s", 
-            main_folder_path, username);
-    system(excution_cmd);
-
-    signup_msg_response_encoder(send_msg, username);
-    write(sockfd, send_msg, strlen(send_msg));
+        signup_msg_response_encoder(send_msg, RESPONSE_OK, nameResponse);
+        write(sockfd, send_msg, strlen(send_msg));
+    } else {
+        signup_msg_response_encoder(send_msg, RESPONSE_NOTFOUND, "");
+        write(sockfd, send_msg, strlen(send_msg));
+    }
+    return;
 }
 
 void create_repo_handler(int sockfd, char* buffer, char *username, char*email) {
@@ -44,33 +58,50 @@ void create_repo_handler(int sockfd, char* buffer, char *username, char*email) {
     char excution_cmd[MSG_MAX_LEN];
     char th_init_cmd[MSG_MAX_LEN];
     char naviagte_to_storage_cmd[MSG_MAX_LEN];
+    char *response_repo;
 
     create_repo_msg_request_decoder(buffer, repo_name);
-    get_main_folder_location(main_folder_path);
-    strcpy(username, "tuna");
 
-    // Create excution cmd
-    bzero(excution_cmd, sizeof(excution_cmd));
-    sprintf(naviagte_to_storage_cmd, "cd %s && cd storage/%s && mkdir %s && cd %s", 
-            main_folder_path, username, repo_name, repo_name);
-    sprintf(th_init_cmd, "th-init %s %s %s", username, email, repo_name);
-    strcat(excution_cmd, naviagte_to_storage_cmd);
-    strcat(excution_cmd, " && ");
-    strcat(excution_cmd, th_init_cmd);
+    response_repo = createRepo(username, repo_name);
 
-    system(excution_cmd);
+    if (response_repo != NULL ) {
+        get_main_folder_location(main_folder_path);
 
-    create_repo_msg_response_encoder(send_msg, repo_name);
-    write(sockfd, send_msg, strlen(send_msg));
+        // Create excution cmd
+        bzero(excution_cmd, sizeof(excution_cmd));
+        sprintf(naviagte_to_storage_cmd, "cd %s && cd storage/%s && mkdir %s && cd %s", 
+                main_folder_path, username, repo_name, repo_name);
+        sprintf(th_init_cmd, "th-init %s %s %s", username, email, repo_name);
+        strcat(excution_cmd, naviagte_to_storage_cmd);
+        strcat(excution_cmd, " && ");
+        strcat(excution_cmd, th_init_cmd);
+
+        system(excution_cmd);
+
+        create_repo_msg_response_encoder(send_msg, RESPONSE_OK,repo_name);
+        write(sockfd, send_msg, strlen(send_msg));
+    } else {
+        create_repo_msg_response_encoder(send_msg, RESPONSE_NOTFOUND, "");
+        write(sockfd, send_msg, strlen(send_msg));
+    }
+    return;
 }
 
 void list_repo_handler(int sockfd, char* buffer, char *username) {
     char send_msg[MSG_MAX_LEN];
-    char list_repo[MSG_MAX_LEN];
-    strcpy(list_repo, "hello\ngood_night\n");
+    char *list_repo;
     list_repo_msg_request_decoder(buffer);
-    list_repo_msg_response_encoder(send_msg, list_repo);
-    write(sockfd, send_msg, strlen(send_msg));
+
+    list_repo = listRepo(username);
+
+    if (list_repo != NULL) {
+        list_repo_msg_response_encoder(send_msg, RESPONSE_OK, list_repo);
+        write(sockfd, send_msg, strlen(send_msg));
+    } else {
+        list_repo_msg_response_encoder(send_msg, RESPONSE_NOTFOUND, "");
+        write(sockfd, send_msg, strlen(send_msg));
+    }
+    return;
 }
 
 int logout_handler(int sockfd, char* buffer) {
@@ -86,13 +117,21 @@ void clone_repo_handler(int sockfd, char* buffer, char *username) {
     char repo_name[REPONAME_LEN];
     char main_folder_path[MSG_MAX_LEN];
     char repo_absolute_path[MSG_MAX_LEN];
+    char *responseRepo;
 
     clone_repo_msg_request_decoder(buffer, repo_name);
-    get_main_folder_location(main_folder_path);
-    sprintf(repo_absolute_path, "%s/storage/%s/%s", main_folder_path, username, repo_name);
+    responseRepo = isExistingRepo(username, repo_name);
 
-    transfer_a_folder(sockfd, repo_absolute_path, repo_name);
-
+    if (responseRepo != NULL) {
+        get_main_folder_location(main_folder_path);
+        sprintf(repo_absolute_path, "%s/storage/%s/%s", main_folder_path, username, repo_name);
+        transfer_a_folder(sockfd, repo_absolute_path, repo_name);
+    } else {
+        char send_msg[MSG_MAX_LEN];
+        clone_repo_msg_response_encoder(send_msg, FAILED, "", "", "", "");
+        write(sockfd, send_msg, sizeof(send_msg));
+    }
+    
     return;
 }
 
@@ -219,38 +258,6 @@ int pull_commits_handler(int sockfd, char* buffer, char* username) {
     return 1;
 }
 
-void get_main_folder_location(char *path){
-  FILE *fp;
-  char temp[1024];
-  int i;
-  bzero(path, sizeof(path));
-
-  /* Open the command for reading. */
-  fp = popen("which th-server", "r");
-  if (fp == NULL) {
-    printf("Failed to run command\n" );
-    exit(1);
-  }
-
-  /* Read the output a line at a time - output it. */
-  while(fgets(temp, sizeof(path), fp) != NULL) {
-      strcat(path, temp);
-      bzero(temp, sizeof(temp));
-  }
-  i = strlen(path);
-  while(path[i] != '/'){
-      path[i--] = '\0';
-  }
-  i--;
-  while(path[i] != '/'){
-      path[i--] = '\0';
-  }
-  path[i] = '\0';
-
-  /* close */
-  pclose(fp);
-
-}
 
 int transfer_a_folder(int sockfd, char* folder_absolute_path, char *folder_name){
     FilePathInfo* path_info = NULL, *temp;

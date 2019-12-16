@@ -42,12 +42,12 @@ void auth_msg_request_decoder(char* encoded_msg, char* email, char *password){
     return;  
 }
 
-void auth_msg_response_encoder(char* encode_msg, char* username){
+void auth_msg_response_encoder(char* encode_msg, char *response_status, char* username){
     int i = 0, t = 0;
     bzero(encode_msg, MSG_MAX_LEN);
 
     while(i < RESPONSE_STATUS_LEN) {
-        encode_msg[i++] = RESPONSE_OK[t++];
+        encode_msg[i++] = response_status[t++];
     }
     encode_msg[i++] = '\n';
     t = 0;
@@ -131,12 +131,12 @@ void signup_msg_request_decoder(char* encoded_msg, char* username, char* email, 
     return;  
 }
 
-void signup_msg_response_encoder(char* encode_msg, char* username){
+void signup_msg_response_encoder(char* encode_msg, char* response_status, char* username){
     int i = 0, t = 0;
     bzero(encode_msg, MSG_MAX_LEN);
 
     while(i < RESPONSE_STATUS_LEN) {
-        encode_msg[i++] = RESPONSE_OK[t++];
+        encode_msg[i++] = response_status[t++];
     }
     encode_msg[i++] = '\n';
     t = 0;
@@ -194,12 +194,12 @@ void create_repo_msg_request_decoder(char* encoded_msg, char* repo_name){
     return;  
 }
 
-void create_repo_msg_response_encoder(char* encode_msg, char* repo_name){
+void create_repo_msg_response_encoder(char* encode_msg, char *response_status, char* repo_name){
     int i = 0, t = 0;
     bzero(encode_msg, MSG_MAX_LEN);
 
     while(i < RESPONSE_STATUS_LEN) {
-        encode_msg[i++] = RESPONSE_OK[t++];
+        encode_msg[i++] = response_status[t++];
     }
     encode_msg[i++] = '\n';
     t = 0;
@@ -245,12 +245,12 @@ void list_repo_msg_request_decoder(char* encoded_msg){
     return;  
 }
 
-void list_repo_msg_response_encoder(char* encode_msg, char* list_repo){
+void list_repo_msg_response_encoder(char* encode_msg, char *response_status, char* list_repo){
     int i = 0, t = 0;
     bzero(encode_msg, MSG_MAX_LEN);
 
     while(i < RESPONSE_STATUS_LEN) {
-        encode_msg[i++] = RESPONSE_OK[t++];
+        encode_msg[i++] = response_status[t++];
     }
     encode_msg[i++] = '\n';
     t = 0;

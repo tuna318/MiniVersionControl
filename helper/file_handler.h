@@ -38,6 +38,7 @@ typedef struct commit {
 #define COMMIT_FOLDER "commits"
 #define COMMIT_FILE "commit_log"
 #define USER_FILE "user_info"
+#define DB "accounts.db"
 
 #define MAXLEN 1024
 #define DELIM " "
@@ -100,6 +101,14 @@ void get_commits_history(char* absolute_folder_path, Commit** head);
 */
 int get_repo_name(char *repo_name);
 
+/* < Get location path of MiniVersionControl >
+* @path (return value): location path of MiniVersionControl
+*/
+void get_main_folder_location(char *path);
+
+/* < Get location path of Database >
+* */
+char* get_db_location();
 
 /* < Add Commit To Commit Log >
 * @commit_file_path (input): path to the commit file

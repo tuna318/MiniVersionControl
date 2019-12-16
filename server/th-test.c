@@ -6,10 +6,7 @@
 
 int main( int argc, char *argv[] )
 {
-  FILE *fi;
-  if( (fi = fopen("test-a", "a+")) == NULL){
-    exit(0);
-  }
-  fprintf(fi, "hello\n");
-  return 1;
+  char *db;
+  db = get_db_location();
+  printf("%s\n", db);
 }

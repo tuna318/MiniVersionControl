@@ -70,13 +70,15 @@ void run(int sockfd){
     do {
         login_flag = NOT_LOGIN;
 
-        printf("Account Manager\n");
-        printf("------------------------------------------\n");
+        printf("\n_____________________\n");
+        printf("|| ACCOUNT MANAGER ||\n");
+        printf("----------------------\n");
         printf("1. Login\n");
         printf("2. Signup\n");
         printf("3. Exit\n");
         printf("Your choice: ");
         scanf("%c%*c", &selector);
+        printf("----------------------\n");
 
         switch(selector){
             case '1':
@@ -98,17 +100,19 @@ void run(int sockfd){
             case '2': 
                 /* Signup */
                 signup_status = sign_up(sockfd, username);
+                // printf("\n--------------------------\n");
                 if (signup_status == STATUS_OK) {
-                    printf("Account %s registered successfully!\n");
+                    printf("INFO: Account %s registered successfully!\n");
                 } else if (signup_status == -2) {
-                    printf("Password and Password confirmation not match!\n");
+                    printf("ERROR: Password and Password confirmation not match!\n");
                 } else if (signup_status == STATUS_FAILED) {
-                    printf("Username or email was used!\nTry again\n");
+                    printf("ERROR: Username or email was used!\nTry again\n");
                 } else {
                     printf("Internall error\n");
                     close(sockfd);
                     return;
                 }
+                // printf("\n--------------------------\n");
                 break;
 
             case '3':
@@ -133,8 +137,9 @@ void logined_menu(int sockfd, char *username) {
     char repo_name[REPONAME_LEN], list_repositories[MSG_MAX_LEN];
 
     do {
-        printf("Logined as %s\n", username);
-        printf("------------------------------------------\n");
+        printf("\n  ____________________\n");
+        printf("|| Logined as %s ||\n", username);
+        printf("  ----------------------\n");
         printf("1. Create a repository\n");
         printf("2. List repositories\n");
         printf("3. Clone repository\n");
@@ -142,6 +147,8 @@ void logined_menu(int sockfd, char *username) {
         printf("5. Exit\n");
         printf("Your choice: ");
         scanf("%c%*c", &selector);
+        printf("----------------------\n");
+
 
         switch(selector){
             case '1':
@@ -162,7 +169,7 @@ void logined_menu(int sockfd, char *username) {
                 /* Show list repositories of current user */
                 req_status = list_repo(sockfd, list_repositories);
                 if (req_status == STATUS_OK) {
-                    printf("List repositories:\n %s\n", list_repositories);
+                    printf("List repositories:\n%s\n", list_repositories);
                 } else if (req_status == STATUS_FAILED) {
                     printf("Failed to get list repositories!\nTry again\n");
                 } else {

@@ -3,10 +3,10 @@
 void checkSignUpNew()
 {
     printf("-------sign up success-----------\n");
-    char *name = createAccount("hanh.shin.1998@gmail.com", "mmm", "123456");
+    char *name = createAccount("hanh.shishi", "haahaa", "123456");
     if (name == NULL)
         printf("FAILED\n");
-    else if (strcmp(name, "mmm") == 0)
+    else if (strcmp(name, "haahaa") == 0)
     {
         printf("%s\nSUCCESS\n", name);
     }
@@ -131,6 +131,7 @@ void checkListRepoNoExist()
 int main()
 {
     checkSignUpExisted();
+    checkSignUpEmailExisted();
     checkSignUpNew();
     checkLoginOK();
     checkLoginFail();

@@ -63,33 +63,32 @@ char *createAccount(char *email, char *name, char *password)
 			}
 			rc = sqlite3_step(res);
 		}
+		sqlite3_finalize(res);
+	}
+	
+	char *sql_insert = "INSERT INTO users(name, password, email) VALUES(?, ?, ?)";
+	if (sqlite3_prepare_v2(db, sql_insert, -1, &res, 0) == SQLITE_OK)
+	{
+		sqlite3_bind_text(res, 1, name, -1, 0);
+		sqlite3_bind_text(res, 2, password, -1, 0);
+		sqlite3_bind_text(res, 3, email, -1, 0);
 	}
 	else
 	{
-		char *sql_insert = "INSERT INTO users(name, password, email) VALUES(?, ?, ?)";
-		if (sqlite3_prepare_v2(db, sql_insert, -1, &res, 0) == SQLITE_OK)
-		{
-			sqlite3_bind_text(res, 1, name, -1, 0);
-			sqlite3_bind_text(res, 2, password, -1, 0);
-			sqlite3_bind_text(res, 3, email, -1, 0);
-		}
-		else
-		{
-			fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
-			sqlite3_finalize(res);
-			sqlite3_close(db);
-			return FAIL_DB;
-		}
-		rc = sqlite3_step(res);
-		if (rc != SQLITE_DONE)
-		{
-			printf("execution failed: %s\n", sqlite3_errmsg(db));
-			sqlite3_finalize(res);
-			sqlite3_close(db);
-			return FAIL_DB;
-		}
-		return name;
+		fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+		sqlite3_finalize(res);
+		sqlite3_close(db);
+		return FAIL_DB;
 	}
+	rc = sqlite3_step(res);
+	if (rc != SQLITE_DONE)
+	{
+		printf("execution failed: %s\n", sqlite3_errmsg(db));
+		sqlite3_finalize(res);
+		sqlite3_close(db);
+		return FAIL_DB;
+	}
+	return name;
 }
 
 char *loginAuth(char *email, char *password)

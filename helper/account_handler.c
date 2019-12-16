@@ -1,7 +1,7 @@
 #include "account_handler.h"
 
 char *createAccount(char *email, char *name, char *password)
-{	
+{
 	char *db_path = get_db_location();
 
 	int rc = sqlite3_open(db_path, &db);
@@ -37,6 +37,32 @@ char *createAccount(char *email, char *name, char *password)
 		sqlite3_finalize(res);
 		sqlite3_close(db);
 		return NULL;
+	}
+	char *sql_select_email = "SELECT email FROM users";
+	if (sqlite3_prepare_v2(db, sql_select_email, -1, &res, 0) != SQLITE_OK)
+	{
+		fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+		sqlite3_finalize(res);
+		sqlite3_close(db);
+		return FAIL_DB;
+	}
+
+	if ((rc = sqlite3_step(res)) == SQLITE_ROW)
+	{
+		char *mailDB = malloc(50 * (sizeof(char)));
+		*mailDB = '\0';
+		while (rc == SQLITE_ROW)
+		{
+			char *x = (char *)sqlite3_column_text(res, 0);
+			if (strcmp(email, x) == 0)
+			{
+				printf("Email existed\n");
+				sqlite3_finalize(res);
+				sqlite3_close(db);
+				return NULL;
+			}
+			rc = sqlite3_step(res);
+		}
 	}
 	else
 	{
@@ -95,7 +121,7 @@ char *loginAuth(char *email, char *password)
 	if (sqlite3_step(res) == SQLITE_ROW)
 	{
 		char *name = malloc(50 * (sizeof(char)));
-		*name = '\0';		
+		*name = '\0';
 		strcpy(name, sqlite3_column_text(res, 1));
 		sqlite3_finalize(res);
 		sqlite3_close(db);
@@ -172,7 +198,7 @@ char *createRepo(char *userName, char *nameRepo)
 }
 
 char *isExistingRepo(char *userName, char *nameRepo)
-{	
+{
 	char *db_path = get_db_location();
 
 	int rc = sqlite3_open(db_path, &db);
@@ -213,7 +239,7 @@ char *isExistingRepo(char *userName, char *nameRepo)
 }
 
 char *listRepo(char *userName)
-{	
+{
 	char *db_path = get_db_location();
 
 	int rc = sqlite3_open(db_path, &db);

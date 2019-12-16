@@ -16,6 +16,17 @@ void checkSignUpNew()
     }
 }
 
+void checkSignUpEmailExisted()
+{
+    printf("-------sign up with email existed-----------\n");
+    char *name;
+    name = createAccount("hanh.shin.1998@gmail.com", "huhu", "123456");
+    if (name == NULL)
+        printf("SUCCESS\n");
+    else
+        printf("FAILED\n");
+}
+
 void checkSignUpExisted()
 {
     printf("-------sign up with user name existed-----------\n");

@@ -102,7 +102,7 @@ void run(int sockfd){
                 signup_status = sign_up(sockfd, username);
                 // printf("\n--------------------------\n");
                 if (signup_status == STATUS_OK) {
-                    printf("INFO: Account %s registered successfully!\n");
+                    printf("INFO: Account %s registered successfully!\n", username);
                 } else if (signup_status == -2) {
                     printf("ERROR: Password and Password confirmation not match!\n");
                 } else if (signup_status == STATUS_FAILED) {
